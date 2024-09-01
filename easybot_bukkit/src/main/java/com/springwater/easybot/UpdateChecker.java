@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UpdateChecker {
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicBoolean enabled = new AtomicBoolean(true);
     private boolean firstRun = true;
 
@@ -21,6 +21,7 @@ public class UpdateChecker {
     public void stop() {
         enabled.set(false);
         scheduler.shutdownNow();
+        scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     private void startUpdateChecking() {
