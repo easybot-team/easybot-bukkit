@@ -28,4 +28,8 @@ public class ClientProfile {
     @Setter
     private static int syncMessageMoney;
 
+    @Getter
+    @Setter
+    private static boolean isDebugMode;
+
 }

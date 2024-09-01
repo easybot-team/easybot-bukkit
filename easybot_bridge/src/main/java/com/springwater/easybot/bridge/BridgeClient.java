@@ -114,7 +114,9 @@ public class BridgeClient {
 
     @OnWebSocketMessage
     public void onMessage(String message) {
-        logger.info("收到消息: " + message);
+        if(ClientProfile.isDebugMode()){
+            logger.info("收到消息: " + message);
+        }
         Gson gson = getGson();
         Packet packet = gson.fromJson(message, Packet.class);
         switch (packet.getOpCode()) {

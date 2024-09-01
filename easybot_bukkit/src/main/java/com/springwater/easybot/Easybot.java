@@ -45,6 +45,7 @@ public final class Easybot extends JavaPlugin {
 
         ClientProfile.setPluginVersion(getDescription().getVersion());
         ClientProfile.setServerDescription(BukkitUtils.tryGetServerDescription());
+        ClientProfile.setDebugMode(getConfig().getBoolean("debug", false));
 
         instance = this;
         bridgeBehavior = new EasyBotImpl();
@@ -70,6 +71,9 @@ public final class Easybot extends JavaPlugin {
     public void reload(){
         updateChecker.stop();
         reloadConfig();
+        ClientProfile.setPluginVersion(getDescription().getVersion());
+        ClientProfile.setServerDescription(BukkitUtils.tryGetServerDescription());
+        ClientProfile.setDebugMode(getConfig().getBoolean("debug", false));
         bridgeClient.setToken(getConfig().getString("service.token"));
         bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
         bridgeClient.stop();

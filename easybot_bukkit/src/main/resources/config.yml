@@ -41,3 +41,6 @@ event:
   enable_success_event: false # 如果要在玩家绑定成功时执行命令,请启用此选项
   bind_success:
     - "say $player 绑定成功! QQ: $account 昵称: $name"
+
+# 调试模式,返回BUG时请将此选项设置为true,然后复现BUG操作再将日志给群主
+debug: false
