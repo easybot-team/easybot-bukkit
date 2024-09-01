@@ -1,0 +1,30 @@
+name: EasyBot
+version: '${version}'
+main: com.springwater.easybot.Easybot
+api-version: '1.13'
+load: STARTUP
+softdepend: [Essentials]
+folia-supported: true
+
+commands:
+  easybot:
+    description: EasyBot
+    usage: /easybot
+    permission-message: "§c你没有权限执行这个命令"
+    permission: easybot.command
+  esay:
+    description: 消息同步
+    usage: /esay
+    permission-message: "§c你没有权限执行这个命令"
+    permission: easybot.command.esay
+
+permissions:
+  easybot.command:
+    description: EasyBot命令基本权限
+    default: true
+  easybot.command.bind:
+    description: 绑定社交账号权限
+    default: true
+  easybot.command.esay:
+    description: 消息同步权限
+    default: true

@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.springwater.easybot'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'javax.websocket:javax.websocket-api:1.1'
+    implementation 'org.eclipse.jetty.websocket:websocket-client:9.4.55.v20240627'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+}
+
+test {
+    useJUnitPlatform()
+}

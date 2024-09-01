@@ -1,0 +1,83 @@
+plugins {
+    id 'java'
+    id 'io.github.goooler.shadow' version '8.1.7'
+}
+
+group = 'com.springwater.easybot'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "spigotmc-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven{
+        name = "placeholder-api"
+        url = "https://repo.extendedclip.com/content/repositories/placeholderapi/"
+    }
+    maven{
+        name = "jitpack"
+        url = "https://jitpack.io"
+    }
+}
+
+tasks.shadowJar {
+    mergeServiceFiles()
+    archiveClassifier = ""
+    archiveFileName = "EasyBot-${version}.jar"
+    relocate("org.reflections", "com.springwater.easybot.libs.reflections")
+    relocate("bot.inker.acj", "com.springwater.easybot.libs.acj")
+    relocate("org.javassist:javassist", "com.springwater.easybot.libs.javassist")
+    relocate("net.kyori", "com.springwater.easybot.libs.kyori")
+}
+
+tasks.build.dependsOn(tasks.shadowJar)
+
+dependencies {
+    compileOnly "org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT"
+    implementation(project(":easybot_bridge"))
+    implementation 'org.javassist:javassist:3.28.0-GA'
+    implementation 'bot.inker.acj:runtime:1.5'
+    implementation 'org.reflections:reflections:0.10.2'
+    compileOnly(fileTree("libs"))
+    compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
+    compileOnly("net.kyori:adventure-api:4.17.0")
+    implementation("net.kyori:adventure-text-serializer-plain:4.17.0")
+}
+
+
+tasks.build.dependsOn(tasks.shadowJar)
+
+
+def targetJavaVersion = 8
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
