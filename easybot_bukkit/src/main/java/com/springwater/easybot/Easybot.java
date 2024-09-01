@@ -67,6 +67,15 @@ public final class Easybot extends JavaPlugin {
         updateChecker.start();
     }
 
+    public void reload(){
+        updateChecker.stop();
+        reloadConfig();
+        bridgeClient.setToken(getConfig().getString("service.token"));
+        bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
+        bridgeClient.stop();
+        updateChecker.start();
+    }
+
     private void initHooks() {
         getLogger().info("正在初始化功能");
         getLogger().info("1.命令执行");

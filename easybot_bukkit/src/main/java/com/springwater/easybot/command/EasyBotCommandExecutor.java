@@ -10,10 +10,7 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class EasyBotCommandExecutor implements TabExecutor {
     private static final String defaultStart =
@@ -28,6 +25,15 @@ public class EasyBotCommandExecutor implements TabExecutor {
             return true;
         }
         FileConfiguration config = Easybot.instance.getConfig();
+        if(args[0].equalsIgnoreCase("reload")){
+            if(!sender.isOp()){
+                sender.sendMessage("§f[§a!§f] §c你没有权限执行此命令");
+                return true;
+            }
+            Easybot.instance.reload();
+            sender.sendMessage("§f[§a!§f] §a配置文件已重载");
+            return true;
+        }
         if (args[0].equalsIgnoreCase("bind")) {
             if (sender instanceof ConsoleCommandSender) {
                 sender.sendMessage("§f[§a!§f] §aBro,你要给控制台绑定账号是吧? [该命令只能由玩家执行]");
@@ -73,6 +79,6 @@ public class EasyBotCommandExecutor implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] strings) {
         if(strings.length != 1) return Arrays.asList();
-        return Arrays.asList("bind");
+        return commandSender.isOp() ? Arrays.asList("bind", "reload") : Collections.singletonList("bind");
     }
 }

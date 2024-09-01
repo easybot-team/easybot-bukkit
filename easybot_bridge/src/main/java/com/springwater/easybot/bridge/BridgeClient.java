@@ -40,7 +40,7 @@ public class BridgeClient {
     private String uri;
     private final Object connectionLock = new Object(); // 用于同步控制的锁
     private boolean isConnected = false; // 标志是否已经连接
-    private final ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
 
     @Getter
     private boolean ready;
@@ -101,6 +101,10 @@ public class BridgeClient {
     private int heartbeatInterval = 120;
 
     private void startHeartbeat() {
+        if (!heartbeatScheduler.isShutdown()) {
+            heartbeatScheduler.shutdownNow();
+        }
+        heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
         heartbeatScheduler.scheduleAtFixedRate(() -> {
             if (session != null && session.isOpen()) {
                 send(gson.toJson(new HeartbeatPacket()));
@@ -345,8 +349,14 @@ public class BridgeClient {
             }
         });
     }
-
-    private void reconnect() {
+    public void stop(){
+        try {
+            client.stop();
+        } catch (Exception e) {
+            logger.severe("停止失败: " + e.getMessage());
+        }
+    }
+    public void reconnect() {
         try {
             TimeUnit.SECONDS.sleep(5); // 重连前的延迟
             logger.warning("正在尝试重连服务器");
