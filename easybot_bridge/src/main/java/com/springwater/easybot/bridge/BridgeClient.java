@@ -40,6 +40,7 @@ public class BridgeClient {
     private String uri;
     private final Object connectionLock = new Object(); // 用于同步控制的锁
     private boolean isConnected = false; // 标志是否已经连接
+    private final ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
 
     @Getter
     private boolean ready;
@@ -95,6 +96,18 @@ public class BridgeClient {
         }
     }
 
+
+    @Getter
+    private int heartbeatInterval = 120;
+
+    private void startHeartbeat() {
+        heartbeatScheduler.scheduleAtFixedRate(() -> {
+            if (session != null && session.isOpen()) {
+                send(gson.toJson(new HeartbeatPacket()));
+            }
+        }, 0, getHeartbeatInterval(), TimeUnit.SECONDS);
+    }
+
     @OnWebSocketMessage
     public void onMessage(String message) {
         logger.info("收到消息: " + message);
@@ -119,6 +132,7 @@ public class BridgeClient {
                 logger.info(">>>准备上传<<<");
                 logger.info("上报身份中...");
 
+                heartbeatInterval = helloPacket.getInterval();
                 sendIdentifyPacket();
                 break;
             case IdentifySuccess:
@@ -127,6 +141,7 @@ public class BridgeClient {
                 logger.info("身份验证成功! 服务器名: " + identifySuccessPacket.getServerName());
                 logger.info("已连接到主程序!");
                 startUpdateSyncSettings();
+                startHeartbeat();
                 ready = true;
                 break;
             case Packet:
@@ -290,6 +305,7 @@ public class BridgeClient {
             isConnected = false; // 当连接关闭时重置状态
         }
         ready = false;
+        heartbeatScheduler.shutdownNow();
         reconnect(); // 尝试重连
     }
 
@@ -300,6 +316,7 @@ public class BridgeClient {
             isConnected = false; // 当连接关闭时重置状态
         }
         ready = false;
+        heartbeatScheduler.shutdownNow();
         reconnect(); // 尝试重连
     }
 
