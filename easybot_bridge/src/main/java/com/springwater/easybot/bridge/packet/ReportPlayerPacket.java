@@ -12,6 +12,8 @@ public class ReportPlayerPacket extends PacketWithCallBackId{
     private String playerName;
     @SerializedName("player_uuid")
     private String playerUuid;
+    @SerializedName("player_ip")
+    private String playerIp;
     public ReportPlayerPacket(){
         setOperation("REPORT_PLAYER");
     }

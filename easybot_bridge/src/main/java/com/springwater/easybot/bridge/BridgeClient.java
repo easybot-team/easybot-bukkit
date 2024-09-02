@@ -248,10 +248,11 @@ public class BridgeClient {
         return sendAndWaitForCallbackAsync(packet, PlayerLoginResultPacket.class).get();
     }
 
-    public void reportPlayer(String playerName, String playerUuid){
+    public void reportPlayer(String playerName, String playerUuid,String playerIp){
         ReportPlayerPacket packet = new ReportPlayerPacket();
         packet.setPlayerName(playerName);
         packet.setPlayerUuid(playerUuid);
+        packet.setPlayerIp(playerIp);
         packet.setCallBackId("");
         send(getGson().toJson(packet));
     }

@@ -2,8 +2,11 @@ package com.springwater.easybot.event;
 
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerLoginResultPacket;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 public class PlayerEvents implements Listener {
@@ -25,7 +28,16 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void reportPlayer(PlayerLoginEvent event){
-        new Thread(() -> Easybot.getClient().reportPlayer(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString()), "EasyBot-Thread: ReportPlayer " + event.getPlayer().getName()).start();
+    public void reportPlayer(PlayerJoinEvent event){
+        String ip = getPlayerIp(event.getPlayer());
+        new Thread(() -> Easybot.getClient().reportPlayer(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString(),ip), "EasyBot-Thread: ReportPlayer " + event.getPlayer().getName()).start();
+    }
+
+    public String getPlayerIp(Player player){
+        if(player.getAddress() == null){
+            return "127.0.0.1";
+        }else{
+            return player.getAddress().getAddress().getHostAddress();
+        }
     }
 }

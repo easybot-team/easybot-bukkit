@@ -7,7 +7,7 @@
 # EasyBot Service Configuration
 service:
   # 请参考EasyBot主程序日志输出的地址
-  url: "ws://127.0.0.1:8080/bridge"
+  url: "ws://127.0.0.1:26990/bridge"
   # 身份标识,请在服务器生成
   token: ""
   # 忽略错误
