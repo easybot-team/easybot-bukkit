@@ -1,9 +1,3 @@
-# =====================================
-# Easybot Plugin Configuration
-# Generated time: ${generateTimestamp}
-# FromVersion: ${version}
-# =====================================
-
 # EasyBot Service Configuration
 service:
   # 请参考EasyBot主程序日志输出的地址

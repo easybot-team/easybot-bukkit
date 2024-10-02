@@ -138,7 +138,7 @@ public class BridgeClient {
                 logger.info(">>>准备上传<<<");
                 logger.info("上报身份中...");
 
-                heartbeatInterval = helloPacket.getInterval();
+                heartbeatInterval = helloPacket.getInterval() - 10;
                 sendIdentifyPacket();
                 break;
             case IdentifySuccess:

@@ -10,15 +10,26 @@ public class BridgeUtils {
         playerInfoWithRaw.setName(player.getName());
         playerInfoWithRaw.setNameRaw(player.getName());
         playerInfoWithRaw.setUuid(player.getUniqueId().toString());
-        playerInfoWithRaw.setIp(player.getAddress().getHostName());
+        playerInfoWithRaw.setIp(getIp(player));
         return playerInfoWithRaw;
+    }
+
+    public static String getIp(Player player){
+        return "";
+        /*
+        try{
+            return player.getAddress().getHostName();
+        }catch (Exception e){
+            return "127.0.0.1";
+        }
+         */
     }
 
     public static PlayerInfo buildPlayerInfo(Player player){
         PlayerInfo playerInfo = new PlayerInfo();
         playerInfo.setPlayerName(player.getName());
         playerInfo.setPlayerUuid(player.getUniqueId().toString());
-        playerInfo.setIp(player.getAddress().getHostName());
+        playerInfo.setIp(getIp(player));
         return playerInfo;
     }
 }

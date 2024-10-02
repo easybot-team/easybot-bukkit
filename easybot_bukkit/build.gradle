@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.springwater.easybot'
-version = '1.9.0'
+version = '1.9.1'
 
 repositories {
     mavenCentral()
@@ -33,7 +33,7 @@ tasks.shadowJar {
     relocate("org.reflections", "com.springwater.easybot.libs.reflections")
     relocate("bot.inker.acj", "com.springwater.easybot.libs.acj")
     relocate("org.javassist:javassist", "com.springwater.easybot.libs.javassist")
-    relocate("net.kyori", "com.springwater.easybot.libs.kyori")
+    //relocate("net.kyori", "com.springwater.easybot.libs.kyori")
 }
 
 tasks.build.dependsOn(tasks.shadowJar)
