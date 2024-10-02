@@ -46,10 +46,14 @@ public class PlayerEvents implements Listener {
     }
 
     public String getPlayerIp(Player player) {
-        if (player.getAddress() == null) {
+        try{
+            if (player.getAddress() == null) {
+                return "127.0.0.1";
+            } else {
+                return player.getAddress().getAddress().getHostAddress();
+            }
+        }catch (Exception ignored){
             return "127.0.0.1";
-        } else {
-            return player.getAddress().getAddress().getHostAddress();
         }
     }
 }
