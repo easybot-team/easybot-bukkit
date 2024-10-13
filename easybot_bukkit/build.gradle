@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.springwater.easybot'
-version = '1.9.2'
+version = '1.9.3'
 
 repositories {
     mavenCentral()
@@ -49,6 +49,7 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("net.kyori:adventure-api:4.17.0")
     implementation("net.kyori:adventure-text-serializer-plain:4.17.0")
+    implementation("org.glavo:rcon-java:2.0.2")
 }
 
 

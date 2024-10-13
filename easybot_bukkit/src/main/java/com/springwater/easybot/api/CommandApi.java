@@ -1,10 +1,14 @@
 package com.springwater.easybot.api;
 
 import com.springwater.easybot.Easybot;
+import com.springwater.easybot.rcon.NativeRcon;
 import com.springwater.easybot.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.glavo.rcon.AuthenticationException;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,8 +16,17 @@ import java.net.InetSocketAddress;
 
 public class CommandApi {
     private Object dedicatedServer;
+    private NativeRcon nativeRcon;
 
     public CommandApi() throws IllegalAccessException {
+        FileConfiguration config = Easybot.instance.getConfig();
+        boolean useNativeRcon = config.getBoolean("adapter.native_rcon.use_native_rcon", false);
+        if(useNativeRcon){
+            nativeRcon = new NativeRcon();
+            Easybot.instance.getLogger().info("命令接口初始化成功 [原生RCON接口]");
+            return;
+        }
+
         Server server = Bukkit.getServer();
         this.dedicatedServer = ReflectionUtils.findFieldByType(server, "DedicatedServer");
         if (dedicatedServer == null) {
@@ -23,6 +36,17 @@ public class CommandApi {
         } else {
             Easybot.instance.getLogger().info("命令接口初始化成功 [新版服务器方案]");
         }
+    }
+
+    public void startNativeRcon() throws AuthenticationException, IOException {
+        nativeRcon.start();
+    }
+
+    public void closeNativeRcon(){
+        if(nativeRcon == null){
+            return;
+        }
+        nativeRcon.close();
     }
 
     private static Class<?> getRconConsoleSourceClassPath() throws ClassNotFoundException {
@@ -48,6 +72,10 @@ public class CommandApi {
 
     // 本质上是冒充RCON执行命令
     public String runCommand(String command) {
+        if(nativeRcon != null){
+            return nativeRcon.executeCommand(command);
+        }
+
         try {
             Method method = dedicatedServer.getClass().getMethod("runCommand", String.class);
             return (String) method.invoke(dedicatedServer, command);

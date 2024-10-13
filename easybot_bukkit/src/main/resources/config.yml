@@ -38,3 +38,14 @@ event:
 
 # 调试模式,返回BUG时请将此选项设置为true,然后复现BUG操作再将日志给群主
 debug: false
+
+# 一些兼容方面的问题
+adapter:
+  native_rcon:
+    # EasyBot执行命令利用了Bukkit的内部rcon接口,一些修改版本的混合端直接基于Fabric或Forge服务器,Rcon相关代码索性直接不实现
+    # 如果你的服务器无法使用执行命令模式,请考虑使用NativeRcon,也就是插件连接到服务器开启的RCON
+    # 启用后会尝试使用本地RCON连接,而不是借用Bukkit的内部rcon接口
+    use_native_rcon: false
+    address: "127.0.0.1"
+    port: 25575
+    password: "" # 服务端的RCON密码

@@ -11,12 +11,15 @@ import com.springwater.easybot.hook.HookerManager;
 import com.springwater.easybot.papi.EasyBotExpansion;
 import com.springwater.easybot.utils.BukkitUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
 
-public final class Easybot extends JavaPlugin {
+public final class Easybot extends JavaPlugin implements Listener {
     public static Easybot instance;
     private static HookerManager eventHooks;
 
@@ -57,9 +60,10 @@ public final class Easybot extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerEvents(), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathSyncEvents(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinExitEvents(), this);
-        if(BukkitUtils.isPaperMessageEvent()){
+        getServer().getPluginManager().registerEvents(this, this);
+        if (BukkitUtils.isPaperMessageEvent()) {
             getServer().getPluginManager().registerEvents(new PaperSideMessageSyncEvents(), this);
-        }else{
+        } else {
             getServer().getPluginManager().registerEvents(new BukkitSideMessageSyncEvents(), this);
         }
 
@@ -68,12 +72,13 @@ public final class Easybot extends JavaPlugin {
         updateChecker.start();
     }
 
-    public void reload(){
+    public void reload() {
         updateChecker.stop();
         reloadConfig();
         ClientProfile.setPluginVersion(getDescription().getVersion());
         ClientProfile.setServerDescription(BukkitUtils.tryGetServerDescription());
         ClientProfile.setDebugMode(getConfig().getBoolean("debug", false));
+        restartNativeRcon();
         bridgeClient.setToken(getConfig().getString("service.token"));
         bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
         bridgeClient.stop();
@@ -143,6 +148,36 @@ public final class Easybot extends JavaPlugin {
             }
         } else {
             Bukkit.getScheduler().runTask(instance, task);
+        }
+    }
+
+    @EventHandler
+    public void onServerStarted(ServerLoadEvent event) {
+        if (event.getType() == ServerLoadEvent.LoadType.STARTUP) {
+            Thread rconThread = new Thread(() -> {
+                try {
+                    getLogger().info("10s后启动原生RCON,请耐心等待!");
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) {
+                    }
+                restartNativeRcon();
+            }, "EasyBot-Rcon-Thread");
+            rconThread.start();
+        }
+    }
+
+    private void restartNativeRcon() {
+        try{
+            boolean useNativeRcon = getConfig().getBoolean("adapter.native_rcon.use_native_rcon", false);
+            if (useNativeRcon) {
+                commandApi.closeNativeRcon();
+                commandApi = new CommandApi();
+                commandApi.startNativeRcon();
+            }
+        }catch (Exception e){
+            getLogger().severe(e + "");
+            getLogger().warning("原生RCON启动失败,您无法通过命令Api执行命令!");
+            ClientProfile.setCommandSupported(false);
         }
     }
 }
