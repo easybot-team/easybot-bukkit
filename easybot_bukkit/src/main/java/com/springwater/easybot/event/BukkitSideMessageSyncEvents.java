@@ -11,6 +11,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 public class BukkitSideMessageSyncEvents implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public static void syncMessage(AsyncPlayerChatEvent event){
+        if(Easybot.instance.getConfig().getBoolean("skip_options.skip_chat")) return;
         if(!event.isCancelled()){
             PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
             new Thread(() -> Easybot.getClient().syncMessage(playerInfo, event.getMessage(), false), "EasyBotThread-SyncMessage(BukkitSide)").start();

@@ -39,6 +39,18 @@ event:
 # 调试模式,返回BUG时请将此选项设置为true,然后复现BUG操作再将日志给群主
 debug: false
 
+# 可以跳过一些事件
+# 跳过一些选项后就算EasyBot那边启用对应功能也无法使用
+skip_options:
+  # 玩家加入服务器时不将消息发送给EasyBot
+  skip_join: false
+  # 玩家离开服务器时不将消息发送给EasyBot
+  skip_quit: false
+  # 玩家聊天时不将消息发送给EasyBot
+  skip_chat: false
+  # 玩家死亡时不将消息发送给EasyBot
+  skip_death: false
+
 # 一些兼容方面的问题
 adapter:
   native_rcon:

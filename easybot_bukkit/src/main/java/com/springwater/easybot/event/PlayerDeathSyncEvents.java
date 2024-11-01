@@ -38,6 +38,7 @@ public class PlayerDeathSyncEvents implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
+        if(Easybot.instance.getConfig().getBoolean("skip_options.skip_death")) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getEntity());
         String deathMessage = event.getDeathMessage();
         if(deathMessage == null){

@@ -12,12 +12,14 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class PlayerJoinExitEvents implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
+        if(Easybot.instance.getConfig().getBoolean("skip_options.skip_join")) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
         new Thread(() -> Easybot.getClient().syncEnterExit(playerInfo, true), "EasyBotThread-SyncPlayerJoinMessage").start();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerQuit(PlayerQuitEvent event) {
+        if(Easybot.instance.getConfig().getBoolean("skip_options.skip_quit")) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
         new Thread(() -> Easybot.getClient().syncEnterExit(playerInfo, false), "EasyBotThread-SyncPlayerExitMessage").start();
     }

@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 public class PaperSideMessageSyncEvents implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public static void syncMessage(AsyncChatEvent event){
+        if(Easybot.instance.getConfig().getBoolean("skip_options.skip_chat")) return;
         if(!event.isCancelled()){
             PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
             String message = PlainTextComponentSerializer.plainText().serialize(event.message());
