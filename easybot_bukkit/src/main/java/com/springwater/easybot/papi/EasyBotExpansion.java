@@ -38,7 +38,7 @@ public class EasyBotExpansion extends PlaceholderExpansion {
         } else if (params.startsWith("bind_name")) {
             return getBindInfo(getQueryName(player, "bind_name_", params)).getName();
         } else if (params.startsWith("is_bind")) {
-            return Objects.equals(getBindInfo(getQueryName(player, "is_bind_", params)).getPlatform(), "") ? "是" : "否";
+            return Objects.equals(getBindInfo(getQueryName(player, "is_bind_", params)).getPlatform(), "") ? "否" : "是";
         } else if (params.startsWith("bind_players")) {
             return getBindInfo(getQueryName(player, "bind_players_", params)).getBindName();
         }
