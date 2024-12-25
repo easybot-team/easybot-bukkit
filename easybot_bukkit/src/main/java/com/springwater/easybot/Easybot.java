@@ -9,6 +9,8 @@ import com.springwater.easybot.command.SyncCommandExecutor;
 import com.springwater.easybot.event.*;
 import com.springwater.easybot.hook.HookerManager;
 import com.springwater.easybot.papi.EasyBotExpansion;
+import com.springwater.easybot.papi.OfflineStatisticExpansion;
+import com.springwater.easybot.task.TaskManager;
 import com.springwater.easybot.utils.BukkitUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -27,7 +29,10 @@ public final class Easybot extends JavaPlugin implements Listener {
     private static BridgeClient bridgeClient;
     private static BridgeBehavior bridgeBehavior;
     private static UpdateChecker updateChecker = new UpdateChecker();
+    private static TaskManager taskManager = new TaskManager();
+
     EasyBotExpansion easyBotExpansion;
+    OfflineStatisticExpansion offlineStatisticExpansion;
 
     public static BridgeClient getClient() {
         return bridgeClient;
@@ -61,15 +66,43 @@ public final class Easybot extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PlayerDeathSyncEvents(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinExitEvents(), this);
         getServer().getPluginManager().registerEvents(this, this);
+
+        handlePlayerChatCompatibility();
+
+        bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
+        bridgeClient.setToken(getConfig().getString("service.token"));
+        updateChecker.start();
+        putTasks();
+    }
+
+    private void handlePlayerChatCompatibility() {
+        if (BukkitUtils.hasPlayerChatPlugin()) {
+            getLogger().info("\u001B[32m※ 检测到PlayerChat插件, 正在检查可用性...\u001B[0m");
+
+            if (BukkitUtils.canUsePlayerChatEvent()) {
+                getLogger().info("\u001B[32m - 您的PlayerChat可以兼容!\u001B[0m");
+                getServer().getPluginManager().registerEvents(new PlayerChatMessageSyncEvents(), this);
+                return;
+            }
+
+            getLogger().warning("\u001B[31m - 检测到PlayerChat插件, 但是无法兼容, 请升级PlayerChat到\u001B[32mv1.1.7\u001B[31m以上版本!!!!\u001B[0m");
+            getLogger().warning("\u001B[31m - 正在使用原版消息事件, 消息同步可能无法使用, 请升级PlayerChat到\u001B[32mv1.1.7\u001B[31m以上版本!!!!\u001B[0m");
+            registerDefaultMessageSyncEvents();
+        } else if (BukkitUtils.hasRedisChatPlugin()) {
+            getLogger().info("\u001B[32m※ 检测到RedisChat插件, 您的消息事件将对接到AsyncRedisChatMessageEvent\u001B[0m");
+            getServer().getPluginManager().registerEvents(new RedisChatMessageSyncEvents(), this);
+        } else {
+            registerDefaultMessageSyncEvents();
+        }
+    }
+
+
+    private void registerDefaultMessageSyncEvents() {
         if (BukkitUtils.isPaperMessageEvent()) {
             getServer().getPluginManager().registerEvents(new PaperSideMessageSyncEvents(), this);
         } else {
             getServer().getPluginManager().registerEvents(new BukkitSideMessageSyncEvents(), this);
         }
-
-        bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
-        bridgeClient.setToken(getConfig().getString("service.token"));
-        updateChecker.start();
     }
 
     public void reload() {
@@ -83,14 +116,20 @@ public final class Easybot extends JavaPlugin implements Listener {
         bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
         bridgeClient.stop();
         updateChecker.start();
+        putTasks();
+    }
+
+    private void putTasks() {
+        taskManager.clearAllTasks();
+        //taskManager.addTask(Tasks.TASK_SERVER_PLAYER_STATE, 60, new ServerPlayerStateTask());
     }
 
     private void initHooks() {
         getLogger().info("正在初始化功能");
-        getLogger().info("1.命令执行");
+        getLogger().info("\u001B[32m[>]\u001B[0m 命令执行");
         try {
             commandApi = new CommandApi();
-            getLogger().info("  ✔ 命令执行");
+            getLogger().info("  \u001B[32m[OK]\u001B[0m 命令执行");
             ClientProfile.setCommandSupported(true);
         } catch (IllegalAccessException e) {
             getLogger().severe(e.toString());
@@ -100,14 +139,22 @@ public final class Easybot extends JavaPlugin implements Listener {
             ClientProfile.setCommandSupported(false);
         }
 
-        getLogger().info("2.占位符");
+        getLogger().info("\u001B[32m[>]\u001B[0m 占位符");
         if (BukkitUtils.placeholderApiInstalled()) {
             if (easyBotExpansion != null) {
                 uninstallPlaceholderApi();
             }
             easyBotExpansion = new EasyBotExpansion();
             easyBotExpansion.register();
-            getLogger().info("  ✔ 占位符");
+
+            if (BukkitUtils.isSupportStatistic()) {
+                offlineStatisticExpansion = new OfflineStatisticExpansion();
+                offlineStatisticExpansion.register();
+            }else{
+                getLogger().warning("× 离线变量 (ez-statistic只支持1.15+的服务器!)");
+            }
+
+            getLogger().info("  \u001B[32m[OK]\u001B[0m 占位符");
             ClientProfile.setPapiSupported(true);
         } else {
             getLogger().warning("× 占位符 (未检测到PlaceholderApi,一些功能无法使用!)");
@@ -115,12 +162,24 @@ public final class Easybot extends JavaPlugin implements Listener {
             ClientProfile.setPapiSupported(false);
         }
 
+        if(BukkitUtils.placeholderApiInstalled() && offlineStatisticExpansion != null){
+            getLogger().info("\u001B[32m※ 已注册离线变量,专用文档: \u001B[33mhttps://docs.hualib.com/offline-papi.html\u001B[0m");
+        }
+
     }
 
     private void uninstallPlaceholderApi() {
-        if (easyBotExpansion != null && BukkitUtils.placeholderApiInstalled()) {
-            easyBotExpansion.unregister();
-            easyBotExpansion = null;
+
+        if (BukkitUtils.placeholderApiInstalled()) {
+            if (easyBotExpansion != null) {
+                easyBotExpansion.unregister();
+                easyBotExpansion = null;
+            }
+
+            if (offlineStatisticExpansion != null) {
+                offlineStatisticExpansion.unregister();
+                offlineStatisticExpansion = null;
+            }
         }
     }
 
@@ -132,6 +191,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         }
         uninstallPlaceholderApi();
         updateChecker.stop();
+        taskManager.clearAllTasks();
     }
 
     public void runTask(Runnable task) {
@@ -159,7 +219,7 @@ public final class Easybot extends JavaPlugin implements Listener {
                     getLogger().info("10s后启动原生RCON,请耐心等待!");
                     Thread.sleep(10000);
                 } catch (InterruptedException ignored) {
-                    }
+                }
                 restartNativeRcon();
             }, "EasyBot-Rcon-Thread");
             rconThread.start();
@@ -167,14 +227,14 @@ public final class Easybot extends JavaPlugin implements Listener {
     }
 
     private void restartNativeRcon() {
-        try{
+        try {
             boolean useNativeRcon = getConfig().getBoolean("adapter.native_rcon.use_native_rcon", false);
             if (useNativeRcon) {
                 commandApi.closeNativeRcon();
                 commandApi = new CommandApi();
                 commandApi.startNativeRcon();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             getLogger().severe(e + "");
             getLogger().warning("原生RCON启动失败,您无法通过命令Api执行命令!");
             ClientProfile.setCommandSupported(false);

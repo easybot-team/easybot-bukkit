@@ -3,6 +3,8 @@ package com.springwater.easybot.utils;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.Bukkit;
 
+import java.lang.reflect.Method;
+
 public class BukkitUtils {
     public static String tryGetServerDescription() {
         try {
@@ -30,6 +32,46 @@ public class BukkitUtils {
             Class.forName("io.papermc.paper.event.player.AsyncChatEvent");
             return true;
         } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean hasPlayerChatPlugin(){
+        try {
+            Class.forName("cn.handyplus.chat.event.PlayerChannelChatEvent");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean canUsePlayerChatEvent(){
+        try{
+            Class.forName("cn.handyplus.chat.event.PlayerChannelChatEvent").getMethod("getOriginalMessage");
+            return true;
+        }catch(Exception e){
+            return false;
+        }
+    }
+
+    public static boolean hasRedisChatPlugin(){
+        try {
+            Class.forName("dev.unnm3d.redischat.api.events.AsyncRedisChatMessageEvent");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean isSupportStatistic(){
+        try{
+            Method[] methods = Class.forName("org.bukkit.OfflinePlayer").getMethods();
+            for(Method method : methods){
+                if(method.getName().equals("getStatistic"))
+                    return true;
+            }
+            return false;
+        }catch(Exception e){
             return false;
         }
     }

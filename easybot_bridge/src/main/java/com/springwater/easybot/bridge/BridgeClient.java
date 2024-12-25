@@ -30,6 +30,10 @@ public class BridgeClient {
     private final WebSocketClient client;
     private final ExecutorService executor;
     private final BridgeBehavior behavior;
+    private final Object connectionLock = new Object(); // 用于同步控制的锁
+    private final ConcurrentHashMap<String, CompletableFuture<String>> callbackTasks = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService timeoutScheduler = Executors.newScheduledThreadPool(1);
+    private final long timeoutSeconds = 5; // Timeout duration
     private Session session;
     @Setter
     @Getter
@@ -38,16 +42,21 @@ public class BridgeClient {
     @Getter
     private String token;
     private String uri;
-    private final Object connectionLock = new Object(); // 用于同步控制的锁
     private boolean isConnected = false; // 标志是否已经连接
     private ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
-
     @Getter
     private boolean ready;
+    @Getter
+    private int heartbeatInterval = 120;
 
-    private final ConcurrentHashMap<String, CompletableFuture<String>> callbackTasks = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService timeoutScheduler = Executors.newScheduledThreadPool(1);
-    private final long timeoutSeconds = 5; // Timeout duration
+    public BridgeClient(String uri, BridgeBehavior behavior) {
+        this.uri = uri;
+        this.behavior = behavior;
+        this.client = new WebSocketClient();
+        this.executor = Executors.newSingleThreadExecutor();
+        connect();
+    }
+
     public <T> CompletableFuture<T> sendAndWaitForCallbackAsync(PacketWithCallBackId packet, Class<T> responseType) {
         String callbackId = UUID.randomUUID().toString();
         packet.setCallBackId(callbackId);
@@ -73,14 +82,6 @@ public class BridgeClient {
         });
     }
 
-    public BridgeClient(String uri, BridgeBehavior behavior) {
-        this.uri = uri;
-        this.behavior = behavior;
-        this.client = new WebSocketClient();
-        this.executor = Executors.newSingleThreadExecutor();
-        connect();
-    }
-
     @OnWebSocketConnect
     public void onConnect(Session session) {
         logger.info("已连接到服务器: " + session.getUpgradeRequest().getRequestURI());
@@ -96,10 +97,6 @@ public class BridgeClient {
         }
     }
 
-
-    @Getter
-    private int heartbeatInterval = 120;
-
     private void startHeartbeat() {
         if (!heartbeatScheduler.isShutdown()) {
             heartbeatScheduler.shutdownNow();
@@ -114,7 +111,7 @@ public class BridgeClient {
 
     @OnWebSocketMessage
     public void onMessage(String message) {
-        if(ClientProfile.isDebugMode()){
+        if (ClientProfile.isDebugMode()) {
             logger.info("收到消息: " + message);
         }
         Gson gson = getGson();
@@ -189,11 +186,11 @@ public class BridgeClient {
             case "PLACEHOLDER_API_QUERY":
                 PlaceholderApiQueryPacket placeholderApiQueryPacket = gson.fromJson(message, PlaceholderApiQueryPacket.class);
                 PlaceholderApiQueryResultPacket papiQueryResultPacket = new PlaceholderApiQueryResultPacket();
-                try{
+                try {
                     String papiQueryResult = behavior.papiQuery(placeholderApiQueryPacket.getPlayerName(), placeholderApiQueryPacket.getText());
                     papiQueryResultPacket.setSuccess(true);
                     papiQueryResultPacket.setText(papiQueryResult);
-                }catch (Exception ex){
+                } catch (Exception ex) {
                     papiQueryResultPacket.setSuccess(false);
                     papiQueryResultPacket.setText(ex.getLocalizedMessage());
                     logger.severe("执行Papi查询命令失败: " + ex);
@@ -203,15 +200,15 @@ public class BridgeClient {
             case "RUN_COMMAND":
                 RunCommandPacket runCommandPacket = gson.fromJson(message, RunCommandPacket.class);
                 RunCommandResultPacket runCommandResultPacket = new RunCommandResultPacket();
-                try{
+                try {
                     String runCommandResult = behavior.runCommand(runCommandPacket.getPlayerName(), runCommandPacket.getCommand(), runCommandPacket.isEnablePapi());
                     runCommandResultPacket.setSuccess(true);
                     runCommandResultPacket.setText(runCommandResult);
-                }catch (Exception ex){
+                } catch (Exception ex) {
                     runCommandResultPacket.setSuccess(false);
                     runCommandResultPacket.setText(ex.getLocalizedMessage());
                     logger.severe("执行命令失败: " + ex);
-               }
+                }
                 GsonUtils.merge(gson, callBack, runCommandResultPacket);
                 break;
             case "SEND_TO_CHAT":
@@ -248,11 +245,29 @@ public class BridgeClient {
         return sendAndWaitForCallbackAsync(packet, PlayerLoginResultPacket.class).get();
     }
 
-    public void reportPlayer(String playerName, String playerUuid,String playerIp){
+    public void reportPlayer(String playerName, String playerUuid, String playerIp) {
         ReportPlayerPacket packet = new ReportPlayerPacket();
         packet.setPlayerName(playerName);
         packet.setPlayerUuid(playerUuid);
         packet.setPlayerIp(playerIp);
+        packet.setCallBackId("");
+        send(getGson().toJson(packet));
+    }
+
+    public void serverState(String players) {
+        ServerStatePacket packet = new ServerStatePacket();
+        packet.setToken(getToken());
+        packet.setPlayers(players);
+        packet.setCallBackId("");
+        send(getGson().toJson(packet));
+    }
+
+    public void dataRecord(RecordTypeEnum type, String data, String name) {
+        DataRecordPacket packet = new DataRecordPacket();
+        packet.setType(type);
+        packet.setData(data);
+        packet.setName(name);
+        packet.setToken(getToken());
         packet.setCallBackId("");
         send(getGson().toJson(packet));
     }
@@ -263,23 +278,23 @@ public class BridgeClient {
         return sendAndWaitForCallbackAsync(packet, StartBindResultPacket.class).get();
     }
 
-    public GetSocialAccountResultPacket getSocialAccount(String playerName) throws ExecutionException, InterruptedException{
+    public GetSocialAccountResultPacket getSocialAccount(String playerName) throws ExecutionException, InterruptedException {
         GetSocialAccountPacket packet = new GetSocialAccountPacket();
         packet.setPlayerName(playerName);
         return sendAndWaitForCallbackAsync(packet, GetSocialAccountResultPacket.class).get();
     }
 
-    public GetNewVersionResultPacket getNewVersion() throws ExecutionException, InterruptedException{
+    public GetNewVersionResultPacket getNewVersion() throws ExecutionException, InterruptedException {
         return sendAndWaitForCallbackAsync(new GetNewVersionPacket(), GetNewVersionResultPacket.class).get();
     }
 
-    public GetBindInfoResultPacket getBindInfo(String playerName) throws ExecutionException, InterruptedException{
+    public GetBindInfoResultPacket getBindInfo(String playerName) throws ExecutionException, InterruptedException {
         GetBindInfoPacket packet = new GetBindInfoPacket();
         packet.setPlayerName(playerName);
         return sendAndWaitForCallbackAsync(packet, GetBindInfoResultPacket.class).get();
     }
 
-    public void syncMessage(PlayerInfoWithRaw playerInfo, String message, boolean useCommand){
+    public void syncMessage(PlayerInfoWithRaw playerInfo, String message, boolean useCommand) {
         SyncMessagePacket packet = new SyncMessagePacket();
         packet.setPlayer(playerInfo);
         packet.setMessage(message);
@@ -288,7 +303,7 @@ public class BridgeClient {
         send(getGson().toJson(packet));
     }
 
-    public void syncDeathMessage(PlayerInfoWithRaw playerInfo, String killMessage, String killer){
+    public void syncDeathMessage(PlayerInfoWithRaw playerInfo, String killMessage, String killer) {
         SyncDeathMessagePacket packet = new SyncDeathMessagePacket();
         packet.setPlayer(playerInfo);
         packet.setRaw(killMessage);
@@ -297,7 +312,7 @@ public class BridgeClient {
         send(getGson().toJson(packet));
     }
 
-    public void syncEnterExit(PlayerInfoWithRaw playerInfo, boolean isEnter){
+    public void syncEnterExit(PlayerInfoWithRaw playerInfo, boolean isEnter) {
         SyncEnterExitMessagePacket packet = new SyncEnterExitMessagePacket();
         packet.setPlayer(playerInfo);
         packet.setEnter(isEnter);
@@ -352,13 +367,15 @@ public class BridgeClient {
             }
         });
     }
-    public void stop(){
+
+    public void stop() {
         try {
             client.stop();
         } catch (Exception e) {
             logger.severe("停止失败: " + e.getMessage());
         }
     }
+
     public void reconnect() {
         try {
             TimeUnit.SECONDS.sleep(5); // 重连前的延迟
@@ -383,7 +400,7 @@ public class BridgeClient {
         }
     }
 
-    public void startUpdateSyncSettings(){
+    public void startUpdateSyncSettings() {
         NeedSyncSettingsPacket packet = new NeedSyncSettingsPacket();
         packet.setCallBackId("");
         send(getGson().toJson(packet));

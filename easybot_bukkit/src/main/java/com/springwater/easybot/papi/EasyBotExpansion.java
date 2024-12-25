@@ -42,7 +42,7 @@ public class EasyBotExpansion extends PlaceholderExpansion {
         } else if (params.startsWith("bind_players")) {
             return getBindInfo(getQueryName(player, "bind_players_", params)).getBindName();
         }
-        return super.onRequest(player, params);
+        return "";
     }
 
     private String getQueryName(OfflinePlayer player, String root, String params) {
