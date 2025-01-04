@@ -2,6 +2,7 @@ package com.springwater.easybot.utils;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.Bukkit;
+import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.lang.reflect.Method;
 
@@ -72,6 +73,24 @@ public class BukkitUtils {
             }
             return false;
         }catch(Exception e){
+            return false;
+        }
+    }
+
+    public static boolean hasGeyserMc(){
+        try {
+            Class.forName("org.geysermc.api.BuildData");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean hasFloodgate(){
+        try {
+            Class.forName("org.geysermc.floodgate.api.player.FloodgatePlayer");
+            return true;
+        } catch (ClassNotFoundException e) {
             return false;
         }
     }

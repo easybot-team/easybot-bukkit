@@ -2,6 +2,7 @@ package com.springwater.easybot.event;
 
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerLoginResultPacket;
+import com.springwater.easybot.utils.GeyserUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,7 +13,10 @@ public class PlayerEvents implements Listener {
     @EventHandler
     public void onPlayerLogin(PlayerLoginEvent event) {
         try {
-            PlayerLoginResultPacket result = Easybot.getClient().login(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString());
+            PlayerLoginResultPacket result = Easybot.getClient().login(
+                    GeyserUtils.getName(event.getPlayer()),
+                    GeyserUtils.getUuid(event.getPlayer()).toString()
+            );
             if (result.getKick()) {
                 event.setKickMessage(result.getKickMessage());
                 event.setResult(PlayerLoginEvent.Result.KICK_OTHER);
@@ -29,7 +33,11 @@ public class PlayerEvents implements Listener {
     @EventHandler
     public void reportPlayerOnLogin(PlayerLoginEvent event) {
         String ip = getPlayerIp(event.getPlayer());
-        new Thread(() -> Easybot.getClient().reportPlayer(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString(), ip), "EasyBot-Thread: ReportPlayerOnLogin " + event.getPlayer().getName()).start();
+        new Thread(() -> Easybot.getClient().reportPlayer(
+                GeyserUtils.getName(event.getPlayer()),
+                GeyserUtils.getUuid(event.getPlayer()).toString(),
+                ip
+        ), "EasyBot-Thread: ReportPlayerOnLogin " + event.getPlayer().getName()).start();
     }
 
     @EventHandler
@@ -41,7 +49,10 @@ public class PlayerEvents implements Listener {
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
-            Easybot.getClient().reportPlayer(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString(), ip);
+            Easybot.getClient().reportPlayer(
+                    GeyserUtils.getName(event.getPlayer()),
+                    GeyserUtils.getUuid(event.getPlayer()).toString(),
+                    ip);
         }, "EasyBot-Thread: ReportPlayerOnJoin " + event.getPlayer().getName()).start();
     }
 

@@ -30,6 +30,14 @@ public class ClientProfile {
 
     @Getter
     @Setter
+    private static boolean hasGeyser;
+
+    @Getter
+    @Setter
+    private static boolean hasFloodgate;
+
+    @Getter
+    @Setter
     private static boolean isDebugMode;
 
 }

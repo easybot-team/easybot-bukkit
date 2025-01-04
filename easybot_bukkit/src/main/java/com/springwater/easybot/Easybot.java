@@ -17,6 +17,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.geysermc.api.Geyser;
+import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -68,11 +70,29 @@ public final class Easybot extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
 
         handlePlayerChatCompatibility();
+        handleGeyserCompatibility();
 
         bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
         bridgeClient.setToken(getConfig().getString("service.token"));
         updateChecker.start();
         putTasks();
+    }
+
+    private void handleGeyserCompatibility() {
+        ClientProfile.setHasGeyser(BukkitUtils.hasGeyserMc());
+        ClientProfile.setHasFloodgate(BukkitUtils.hasFloodgate());
+        if (ClientProfile.isHasGeyser()) {
+            getLogger().info("\u001B[32m※ 检测到GeyserMC插件\u001B[0m");
+        }
+        if (ClientProfile.isHasFloodgate()) {
+            getLogger().info("\u001B[32m※ 检测到Floodgate插件\u001B[0m");
+
+            String userNamePrefix = FloodgateApi.getInstance().getPlayerPrefix();
+            if(userNamePrefix != null){
+                getLogger().info("\u001B[32m - 基岩版用户前缀: " + userNamePrefix + "\u001B[0m");
+                getLogger().info("\u001B[32m - 注意: EasyBot会在处理数据时忽略玩家前缀: " + userNamePrefix + "MiuxuE" + " -> " + "MiuxuE" + "\u001B[0m");
+            }
+        }
     }
 
     private void handlePlayerChatCompatibility() {
@@ -150,7 +170,7 @@ public final class Easybot extends JavaPlugin implements Listener {
             if (BukkitUtils.isSupportStatistic()) {
                 offlineStatisticExpansion = new OfflineStatisticExpansion();
                 offlineStatisticExpansion.register();
-            }else{
+            } else {
                 getLogger().warning("× 离线变量 (ez-statistic只支持1.15+的服务器!)");
             }
 
@@ -162,7 +182,7 @@ public final class Easybot extends JavaPlugin implements Listener {
             ClientProfile.setPapiSupported(false);
         }
 
-        if(BukkitUtils.placeholderApiInstalled() && offlineStatisticExpansion != null){
+        if (BukkitUtils.placeholderApiInstalled() && offlineStatisticExpansion != null) {
             getLogger().info("\u001B[32m※ 已注册离线变量,专用文档: \u001B[33mhttps://docs.hualib.com/offline-papi.html\u001B[0m");
         }
 

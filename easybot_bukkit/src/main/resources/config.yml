@@ -61,3 +61,12 @@ adapter:
     address: "127.0.0.1"
     port: 25575
     password: "" # 服务端的RCON密码
+
+# 间歇泉配置
+geyser:
+  # 是否忽略由 Floodgate 设置的基岩版玩家前缀
+  # 注意：
+  # - 如果之前未启用但现在启用，一些已经绑定的基岩版玩家可能需要重新绑定。（为什么你自己想）
+  # - 启用时（True），如果基岩版玩家的前缀为 BE_。
+  #   示例：BE_MiuxuE -> MiuxuE
+  ignore_prefix: false
