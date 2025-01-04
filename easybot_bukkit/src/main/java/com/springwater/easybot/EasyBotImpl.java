@@ -74,23 +74,22 @@ public class EasyBotImpl implements BridgeBehavior {
                         .replace("#account", accountId)
                         .replace("#name", accountName);
                 onlinePlayer.sendMessage(message);
-                if (Easybot.instance.getConfig().getBoolean("event.enable_success_event", false)) {
-                    if (!ClientProfile.isCommandSupported()) {
-                        logger.warning("无法在玩家绑定成功后执行命令: 此服务端不支持执行命令,请检查EasyBot之前输出的日志以找到原因!");
-                    } else {
-                        List<String> commands = Easybot.instance.getConfig().getStringList("event.bind_success");
-                        for (String command : commands) {
-                            command = command
-                                    .replace("&", "§")
-                                    .replace("$player", playerName)
-                                    .replace("$account", accountId)
-                                    .replace("$name", accountName);
-                            Easybot.getCommandApi().runCommandAsConsole(command);
-                        }
+            }
+
+            if (Easybot.instance.getConfig().getBoolean("event.enable_success_event", false)) {
+                if (!ClientProfile.isCommandSupported()) {
+                    logger.warning("无法在玩家绑定成功后执行命令: 此服务端不支持执行命令,请检查EasyBot之前输出的日志以找到原因!");
+                } else {
+                    List<String> commands = Easybot.instance.getConfig().getStringList("event.bind_success");
+                    for (String command : commands) {
+                        command = command
+                                .replace("&", "§")
+                                .replace("$player", playerName)
+                                .replace("$account", accountId)
+                                .replace("$name", accountName);
+                        Easybot.getCommandApi().runCommandAsConsole(command);
                     }
                 }
-
-
             }
         });
     }

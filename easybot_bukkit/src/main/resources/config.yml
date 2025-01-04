@@ -45,7 +45,7 @@ skip_options:
   # 玩家加入服务器时不将消息发送给EasyBot
   skip_join: false
   # 玩家离开服务器时不将消息发送给EasyBot
-  skip_quit: false
+  skip_qu it: false
   # 玩家聊天时不将消息发送给EasyBot
   skip_chat: false
   # 玩家死亡时不将消息发送给EasyBot

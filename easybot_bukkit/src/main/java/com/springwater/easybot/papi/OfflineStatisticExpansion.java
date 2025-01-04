@@ -2,6 +2,7 @@ package com.springwater.easybot.papi;
 
 import com.springwater.easybot.utils.StatisticsParser;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
