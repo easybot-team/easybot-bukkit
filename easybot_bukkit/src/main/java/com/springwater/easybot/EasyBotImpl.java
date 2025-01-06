@@ -7,6 +7,8 @@ import com.springwater.easybot.bridge.message.FileSegment;
 import com.springwater.easybot.bridge.message.ImageSegment;
 import com.springwater.easybot.bridge.message.Segment;
 import com.springwater.easybot.bridge.model.ServerInfo;
+import com.springwater.easybot.utils.AtEventUtils;
+import com.springwater.easybot.utils.GeyserUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
@@ -14,9 +16,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class EasyBotImpl implements BridgeBehavior {
     private final Logger logger = Logger.getLogger("EasyBotImpl");
@@ -118,7 +122,24 @@ public class EasyBotImpl implements BridgeBehavior {
                 builder.append(toComponent(segment));
             }
 
-            Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(builder.create())));
+            List<String> atPlayerNames = segments.stream()
+                    .filter(x -> x instanceof AtSegment)
+                    .flatMap(seg -> Arrays.stream(((AtSegment) seg).getAtPlayerNames()))
+                    .collect(Collectors.toList());
+
+            Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(p -> {
+                // 判断玩家名字是否在atPlayerNames中,忽略大小写
+                boolean hasAt = atPlayerNames.stream().anyMatch(x -> x.equalsIgnoreCase(GeyserUtils.getName(p)));
+                if(!hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.find", true)){
+                    hasAt = text.contains(GeyserUtils.getName(p));
+                }
+
+                if(hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.enable", true)){
+                    AtEventUtils.at(p.getPlayer());
+                }
+
+                p.sendMessage(builder.create());
+            }));
         } catch (Exception ex) {
             logger.warning(ex.getMessage());
             logger.warning("将群内消息转换为Minecraft格式消息时遇到错误,将向玩家发送原始信息!");

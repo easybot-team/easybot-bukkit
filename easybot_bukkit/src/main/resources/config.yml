@@ -35,6 +35,23 @@ event:
   enable_success_event: false # 如果要在玩家绑定成功时执行命令,请启用此选项
   bind_success:
     - "say $player 绑定成功! QQ: $account 昵称: $name"
+  # 当消息同步的消息中含有@消息,且被@的人(绑定了账号的QQ)在线,则显示Title提示
+  on_at:
+    enable: true
+    title: "§a有人@你"
+    sub_title: "§a请及时处理"
+    # 寻找模式
+    # 关闭时: 仅监测消息中真@消息 (如果@的人绑定了账号才触发)
+    # 开启时: 消息中包含某个在线玩家的名字就认定为@了该玩家
+    find: true
+    # 被@时给玩家播放声音
+    play_sound: true
+    # 声音类型 (如果你设置错了,那就没有声音哦)
+    # 只能播放EasyBot预设的声音
+    # 0: 铁砧落地
+    # 1：咚 (高版本,也好听~)
+    # 2: 紫水晶 (高版本,挺好听的~)
+    sound: 0
 
 # 调试模式,返回BUG时请将此选项设置为true,然后复现BUG操作再将日志给群主
 debug: false
@@ -45,7 +62,7 @@ skip_options:
   # 玩家加入服务器时不将消息发送给EasyBot
   skip_join: false
   # 玩家离开服务器时不将消息发送给EasyBot
-  skip_qu it: false
+  skip_quit: false
   # 玩家聊天时不将消息发送给EasyBot
   skip_chat: false
   # 玩家死亡时不将消息发送给EasyBot
