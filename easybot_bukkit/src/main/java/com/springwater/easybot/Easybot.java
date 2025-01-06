@@ -17,7 +17,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.geysermc.api.Geyser;
 import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.lang.reflect.Method;
@@ -69,13 +68,23 @@ public final class Easybot extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PlayerJoinExitEvents(), this);
         getServer().getPluginManager().registerEvents(this, this);
 
-        handlePlayerChatCompatibility();
+        handleChatsCompatibility();
         handleGeyserCompatibility();
+        handleBungeeChatCompatibility();
 
         bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
         bridgeClient.setToken(getConfig().getString("service.token"));
         updateChecker.start();
         putTasks();
+    }
+
+    private void handleBungeeChatCompatibility() {
+        ClientProfile.setHasBungeeChatApi(BukkitUtils.hasBungeeChatApi());
+        if (ClientProfile.isHasBungeeChatApi()) {
+            getLogger().info("\u001B[32m※ 您的服务器支持消息同步高级API\u001B[0m");
+        }else{
+            getLogger().info("\u001B[32m※ 您的服务端不支持消息同步高级API! 消息同步将以旧版本格式展示!\u001B[0m");
+        }
     }
 
     private void handleGeyserCompatibility() {
@@ -90,12 +99,17 @@ public final class Easybot extends JavaPlugin implements Listener {
             String userNamePrefix = FloodgateApi.getInstance().getPlayerPrefix();
             if(userNamePrefix != null){
                 getLogger().info("\u001B[32m - 基岩版用户前缀: " + userNamePrefix + "\u001B[0m");
-                getLogger().info("\u001B[32m - 注意: EasyBot会在处理数据时忽略玩家前缀: " + userNamePrefix + "MiuxuE" + " -> " + "MiuxuE" + "\u001B[0m");
+                if(getConfig().getBoolean("geyser.ignore_prefix")){
+                    getLogger().info("\u001B[32m - 注意: EasyBot会在处理数据时忽略玩家前缀: " + userNamePrefix + "MiuxuE" + " -> " + "MiuxuE" + "\u001B[0m");
+                }else{
+                    getLogger().info("\u001B[32m - 您可以设置为忽略前缀, 忽略前缀后玩家将不再有前缀,例:" + userNamePrefix + "MiuxuE" + " -> " + userNamePrefix + "MiuxuE" + "\u001B[0m");
+                    getLogger().info("\u001B[32m - 请参考配置文件: geyser.ignore_prefix\u001B[0m");
+                }
             }
         }
     }
 
-    private void handlePlayerChatCompatibility() {
+    private void handleChatsCompatibility() {
         if (BukkitUtils.hasPlayerChatPlugin()) {
             getLogger().info("\u001B[32m※ 检测到PlayerChat插件, 正在检查可用性...\u001B[0m");
 

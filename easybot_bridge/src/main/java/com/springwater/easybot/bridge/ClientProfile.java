@@ -38,6 +38,10 @@ public class ClientProfile {
 
     @Getter
     @Setter
+    private static boolean hasBungeeChatApi;
+
+    @Getter
+    @Setter
     private static boolean isDebugMode;
 
 }

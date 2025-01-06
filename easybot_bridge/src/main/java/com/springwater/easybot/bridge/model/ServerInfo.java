@@ -21,4 +21,7 @@ public class ServerInfo {
 
     @SerializedName("is_command_supported")
     private boolean isCommandSupported;
+
+    @SerializedName("has_geyser")
+    private boolean hasGeyser;
 }

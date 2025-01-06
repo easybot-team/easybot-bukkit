@@ -94,4 +94,13 @@ public class BukkitUtils {
             return false;
         }
     }
+
+    public static boolean hasBungeeChatApi(){
+        try {
+            Class.forName("net.md_5.bungee.api.chat.BaseComponent");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 }

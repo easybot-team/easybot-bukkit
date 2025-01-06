@@ -2,8 +2,11 @@ package com.springwater.easybot.bridge;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.springwater.easybot.bridge.adapter.OpCodeAdapter;
+import com.springwater.easybot.bridge.message.Segment;
+import com.springwater.easybot.bridge.message.SegmentType;
 import com.springwater.easybot.bridge.model.PlayerInfo;
 import com.springwater.easybot.bridge.model.ServerInfo;
 import com.springwater.easybot.bridge.packet.*;
@@ -16,9 +19,15 @@ import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import static com.springwater.easybot.bridge.message.Segment.getSegmentClass;
 
 @WebSocket
 public class BridgeClient {
@@ -127,11 +136,11 @@ public class BridgeClient {
                 logger.info("主程序版本: " + helloPacket.getVersion());
                 logger.info("连接信息: " + helloPacket.getSessionId() + " (心跳:" + helloPacket.getInterval() + "s)");
                 logger.info(">>>服务器信息<<<");
-                logger.info("Token: " + getToken());
-                logger.info("Server: " + ClientProfile.getServerDescription());
-                logger.info("Version: " + ClientProfile.getPluginVersion());
-                logger.info("CommandSupported: " + ClientProfile.isCommandSupported());
-                logger.info("PapiSupported" + ClientProfile.isPapiSupported());
+                logger.info("令牌: " + getToken());
+                logger.info("服务器: " + ClientProfile.getServerDescription());
+                logger.info("插件版本: " + ClientProfile.getPluginVersion());
+                logger.info("支持命令: " + ClientProfile.isCommandSupported());
+                logger.info("变量支持:" + ClientProfile.isPapiSupported());
                 logger.info(">>>准备上传<<<");
                 logger.info("上报身份中...");
 
@@ -213,7 +222,24 @@ public class BridgeClient {
                 break;
             case "SEND_TO_CHAT":
                 SendToChatPacket sendToChatPacket = gson.fromJson(message, SendToChatPacket.class);
-                behavior.SyncToChat(sendToChatPacket.getText());
+                if (sendToChatPacket.getExtra() == null) {
+                    behavior.SyncToChat(sendToChatPacket.getText());
+                    break;
+                }
+
+                List<Segment> segments = StreamSupport.stream(
+                                sendToChatPacket.getExtra().getAsJsonArray().spliterator(), false
+                        )
+                        .map(JsonElement::getAsJsonObject)
+                        .map(extraObject -> {
+                            SegmentType extraType = SegmentType.getSegmentType(extraObject.get("type").getAsInt());
+                            if (extraType == null) return null;
+                            Class<? extends Segment> segmentClass = getSegmentClass(extraType);
+                            return segmentClass != null ? gson.fromJson(extraObject, segmentClass) : null;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                behavior.SyncToChatExtra(segments, sendToChatPacket.getText());
                 break;
             case "SYNC_SETTINGS_UPDATED":
                 UpdateSyncSettingsPacket updateSyncSettingsPacket = gson.fromJson(message, UpdateSyncSettingsPacket.class);

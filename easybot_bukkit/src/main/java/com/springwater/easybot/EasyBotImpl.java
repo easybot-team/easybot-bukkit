@@ -2,15 +2,20 @@ package com.springwater.easybot;
 
 import com.springwater.easybot.bridge.BridgeBehavior;
 import com.springwater.easybot.bridge.ClientProfile;
+import com.springwater.easybot.bridge.message.AtSegment;
+import com.springwater.easybot.bridge.message.FileSegment;
+import com.springwater.easybot.bridge.message.ImageSegment;
+import com.springwater.easybot.bridge.message.Segment;
 import com.springwater.easybot.bridge.model.ServerInfo;
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.*;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class EasyBotImpl implements BridgeBehavior {
@@ -102,5 +107,79 @@ public class EasyBotImpl implements BridgeBehavior {
                 kickPlayer.kickPlayer(kickMessage);
             }
         });
+    }
+
+    @Override
+    public void SyncToChatExtra(List<Segment> segments, String text) {
+        try {
+            ComponentBuilder builder = new ComponentBuilder("");
+
+            for (Segment segment : segments) {
+                builder.append(toComponent(segment));
+            }
+
+            Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(builder.create())));
+        } catch (Exception ex) {
+            logger.warning(ex.getMessage());
+            logger.warning("将群内消息转换为Minecraft格式消息时遇到错误,将向玩家发送原始信息!");
+            Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
+        }
+    }
+
+
+    private BaseComponent toComponent(Segment segment) {
+        TextComponent component = new TextComponent(segment.getText());
+        if (segment instanceof AtSegment) {
+            component.setColor(ChatColor.GOLD);
+            String[] atPlayerNames = ((AtSegment) segment).getAtPlayerNames();
+            if(!Objects.equals(((AtSegment) segment).getAtUserId(), "0")){
+                component.setHoverEvent(
+                        new HoverEvent(
+                                HoverEvent.Action.SHOW_TEXT,
+                                new ComponentBuilder("")
+                                        .append("@")
+                                        .append(((AtSegment) segment).getAtUserName())
+                                        .append(" (")
+                                        .append(((AtSegment) segment).getAtUserId())
+                                        .append(")")
+                                        .append(
+                                                atPlayerNames.length > 1 ?
+                                                        new TextComponent(
+                                                                "\n该玩家绑定了" + atPlayerNames.length + "个账号\n" + String.join(",", atPlayerNames)
+                                                        )
+                                                        : new TextComponent("")
+                                        )
+                                        .create()
+                        )
+                );
+            }
+        } else if (segment instanceof ImageSegment) {
+            component.setColor(ChatColor.GREEN);
+            component.setHoverEvent(new HoverEvent(
+                    HoverEvent.Action.SHOW_TEXT,
+                    new ComponentBuilder("§7§n点击预览 ")
+                            .append(new TextComponent("§7§n" + ((ImageSegment) segment).getUrl()))
+                            .create()
+            ));
+            component.setClickEvent(new ClickEvent(
+                    ClickEvent.Action.OPEN_URL,
+                    ((ImageSegment) segment).getUrl()
+            ));
+        } else if (segment instanceof FileSegment) {
+            component.setColor(ChatColor.GOLD);
+            component.setHoverEvent(new HoverEvent(
+                    HoverEvent.Action.SHOW_TEXT,
+                    new ComponentBuilder("§7§n点击下载 ")
+                            .append(new TextComponent("§7§n" + ((FileSegment) segment).getFileUrl()))
+                            .create()
+            ));
+            component.setClickEvent(new ClickEvent(
+                    ClickEvent.Action.OPEN_URL,
+                    ((FileSegment) segment).getFileUrl()
+            ));
+        }else{
+            component.setColor(ChatColor.WHITE);
+        }
+        return component;
     }
 }
