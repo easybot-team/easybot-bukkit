@@ -64,6 +64,7 @@ public class EasyBotImpl implements BridgeBehavior {
         info.setServerVersion(Bukkit.getBukkitVersion());
         info.setCommandSupported(ClientProfile.isCommandSupported());
         info.setPapiSupported(ClientProfile.isPapiSupported());
+        info.setHasGeyser(ClientProfile.isHasGeyser());
         return info;
     }
 
