@@ -15,4 +15,10 @@ public class PlayerInfo {
 
     @SerializedName("ip")
     private String ip;
+
+    @SerializedName("skin_url")
+    private String skinUrl;
+
+    @SerializedName("bedrock")
+    private boolean bedrock;
 }

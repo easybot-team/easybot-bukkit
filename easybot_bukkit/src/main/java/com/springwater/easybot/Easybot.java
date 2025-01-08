@@ -68,9 +68,11 @@ public final class Easybot extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PlayerJoinExitEvents(), this);
         getServer().getPluginManager().registerEvents(this, this);
 
+        onlineModeCheck();
         handleChatsCompatibility();
         handleGeyserCompatibility();
         handleBungeeChatCompatibility();
+        handleSkinsRestorerCompatibility();
 
         bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
         bridgeClient.setToken(getConfig().getString("service.token"));
@@ -78,11 +80,38 @@ public final class Easybot extends JavaPlugin implements Listener {
         putTasks();
     }
 
+
+    private void handleSkinsRestorerCompatibility() {
+        if(BukkitUtils.hasSkinsRestorer() && !BukkitUtils.placeholderApiInstalled()){
+            getLogger().info("\u001B[31m※ 检测到SkinsRestorer插件,但未检测到PlaceholderApi插件,EasyBot获取SkinsRestorer的皮肤需要依赖PlaceholderApi！\u001B[0m");
+        }
+
+        if (BukkitUtils.hasSkinsRestorer() &&   BukkitUtils.placeholderApiInstalled()) {
+            getLogger().info("\u001B[32m※ 检测到SkinsRestorer插件,玩家皮肤将通过该插件获取！\u001B[0m");
+            ClientProfile.setHasSkinsRestorer(true);
+        } else if (BukkitUtils.hasPaperSkinApi()) {
+            getLogger().info("\u001B[32m※ 检测到Paper皮肤API,玩家皮肤将通过该接口获取(正版)！\u001B[0m");
+            ClientProfile.setHasPaperSkinApi(true);
+        } else if (!ClientProfile.isOnlineMode()) {
+            getLogger().info("\u001B[31m※ 当前服务器为离线服务器,且你并未安装\u001B[32mSkinsRestorer\u001B[31m插件,这会导致获取玩家皮肤不正确！\u001B[0m");
+        }
+    }
+
+    private void onlineModeCheck() {
+        try {
+            ClientProfile.setOnlineMode(Bukkit.getServer().getOnlineMode());
+            if (ClientProfile.isOnlineMode()) {
+                getLogger().info("\u001B[32m※ 当前服务器已开启正版验证\u001B[0m");
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     private void handleBungeeChatCompatibility() {
         ClientProfile.setHasBungeeChatApi(BukkitUtils.hasBungeeChatApi());
         if (ClientProfile.isHasBungeeChatApi()) {
             getLogger().info("\u001B[32m※ 您的服务器支持消息同步高级API\u001B[0m");
-        }else{
+        } else {
             getLogger().info("\u001B[32m※ 您的服务端不支持消息同步高级API! 消息同步将以旧版本格式展示!\u001B[0m");
         }
     }
@@ -97,11 +126,11 @@ public final class Easybot extends JavaPlugin implements Listener {
             getLogger().info("\u001B[32m※ 检测到Floodgate插件\u001B[0m");
 
             String userNamePrefix = FloodgateApi.getInstance().getPlayerPrefix();
-            if(userNamePrefix != null){
+            if (userNamePrefix != null) {
                 getLogger().info("\u001B[32m - 基岩版用户前缀: " + userNamePrefix + "\u001B[0m");
-                if(getConfig().getBoolean("geyser.ignore_prefix")){
+                if (getConfig().getBoolean("geyser.ignore_prefix")) {
                     getLogger().info("\u001B[32m - 注意: EasyBot会在处理数据时忽略玩家前缀: " + userNamePrefix + "MiuxuE" + " -> " + "MiuxuE" + "\u001B[0m");
-                }else{
+                } else {
                     getLogger().info("\u001B[32m - 您可以设置为忽略前缀, 忽略前缀后玩家将不再有前缀,例:" + userNamePrefix + "MiuxuE" + " -> " + userNamePrefix + "MiuxuE" + "\u001B[0m");
                     getLogger().info("\u001B[32m - 请参考配置文件: geyser.ignore_prefix\u001B[0m");
                 }

@@ -24,4 +24,7 @@ public class ServerInfo {
 
     @SerializedName("has_geyser")
     private boolean hasGeyser;
+
+    @SerializedName("is_online_mode")
+    private boolean isOnlineMode;
 }

@@ -13,4 +13,16 @@ public class BridgeUtils {
         playerInfoWithRaw.setIp("");
         return playerInfoWithRaw;
     }
+
+    public static String getPlayerIp(Player player) {
+        try{
+            if (player.getAddress() == null) {
+                return "127.0.0.1";
+            } else {
+                return player.getAddress().getAddress().getHostAddress();
+            }
+        }catch (Exception ignored){
+            return "127.0.0.1";
+        }
+    }
 }

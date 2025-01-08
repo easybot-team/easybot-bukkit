@@ -6,9 +6,12 @@ import com.springwater.easybot.bridge.message.AtSegment;
 import com.springwater.easybot.bridge.message.FileSegment;
 import com.springwater.easybot.bridge.message.ImageSegment;
 import com.springwater.easybot.bridge.message.Segment;
+import com.springwater.easybot.bridge.model.PlayerInfo;
 import com.springwater.easybot.bridge.model.ServerInfo;
 import com.springwater.easybot.utils.AtEventUtils;
+import com.springwater.easybot.utils.BridgeUtils;
 import com.springwater.easybot.utils.GeyserUtils;
+import com.springwater.easybot.utils.SkinUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
@@ -65,6 +68,7 @@ public class EasyBotImpl implements BridgeBehavior {
         info.setCommandSupported(ClientProfile.isCommandSupported());
         info.setPapiSupported(ClientProfile.isPapiSupported());
         info.setHasGeyser(ClientProfile.isHasGeyser());
+        info.setOnlineMode(ClientProfile.isOnlineMode());
         return info;
     }
 
@@ -131,11 +135,11 @@ public class EasyBotImpl implements BridgeBehavior {
             Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(p -> {
                 // 判断玩家名字是否在atPlayerNames中,忽略大小写
                 boolean hasAt = atPlayerNames.stream().anyMatch(x -> x.equalsIgnoreCase(GeyserUtils.getName(p)));
-                if(!hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.find", true)){
+                if (!hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.find", true)) {
                     hasAt = text.contains(GeyserUtils.getName(p));
                 }
 
-                if(hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.enable", true)){
+                if (hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.enable", true)) {
                     AtEventUtils.at(p.getPlayer());
                 }
 
@@ -148,13 +152,28 @@ public class EasyBotImpl implements BridgeBehavior {
         }
     }
 
+    @Override
+    public List<PlayerInfo> getPlayerList() {
+        return Bukkit.getOnlinePlayers().stream()
+                .map(x -> {
+                    PlayerInfo info = new PlayerInfo();
+                    info.setPlayerName(GeyserUtils.getName(x));
+                    info.setPlayerUuid(GeyserUtils.getUuid(x).toString());
+                    info.setIp(BridgeUtils.getPlayerIp(x));
+                    info.setBedrock(GeyserUtils.isBedrock(x));
+                    info.setSkinUrl(SkinUtils.getSkin(x));
+                    return info;
+                })
+                .collect(Collectors.toList());
+    }
+
 
     private BaseComponent toComponent(Segment segment) {
         TextComponent component = new TextComponent(segment.getText());
         if (segment instanceof AtSegment) {
             component.setColor(ChatColor.GOLD);
             String[] atPlayerNames = ((AtSegment) segment).getAtPlayerNames();
-            if(!Objects.equals(((AtSegment) segment).getAtUserId(), "0")){
+            if (!Objects.equals(((AtSegment) segment).getAtUserId(), "0")) {
                 component.setHoverEvent(
                         new HoverEvent(
                                 HoverEvent.Action.SHOW_TEXT,
@@ -199,7 +218,7 @@ public class EasyBotImpl implements BridgeBehavior {
                     ClickEvent.Action.OPEN_URL,
                     ((FileSegment) segment).getFileUrl()
             ));
-        }else{
+        } else {
             component.setColor(ChatColor.WHITE);
         }
         return component;

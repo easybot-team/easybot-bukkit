@@ -1,8 +1,7 @@
 package com.springwater.easybot.utils;
 
-import io.papermc.paper.event.player.AsyncChatEvent;
+import com.destroystokyo.paper.profile.PlayerProfile;
 import org.bukkit.Bukkit;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.lang.reflect.Method;
 
@@ -98,6 +97,26 @@ public class BukkitUtils {
     public static boolean hasBungeeChatApi(){
         try {
             Class.forName("net.md_5.bungee.api.chat.BaseComponent");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean hasSkinsRestorer(){
+        try {
+            Class.forName("net.skinsrestorer.api.SkinsRestorerProvider");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean hasPaperSkinApi(){
+        try {
+
+            Class.forName("com.destroystokyo.paper.profile.PlayerProfile");
+            Class.forName("org.bukkit.profile.PlayerTextures");
             return true;
         } catch (ClassNotFoundException e) {
             return false;

@@ -3,6 +3,8 @@ package com.springwater.easybot.utils;
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.ClientProfile;
 import org.bukkit.entity.Player;
+import org.geysermc.api.Geyser;
+import org.geysermc.api.GeyserApiBase;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 
@@ -41,5 +43,12 @@ public class GeyserUtils {
             }
         }
         return player.getUniqueId();
+    }
+
+    public static boolean isBedrock(Player player) {
+        if (ClientProfile.isHasGeyser()) {
+            return Geyser.api().isBedrockPlayer(player.getUniqueId());
+        }
+        return false;
     }
 }

@@ -2,6 +2,7 @@ package com.springwater.easybot.event;
 
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerLoginResultPacket;
+import com.springwater.easybot.utils.BridgeUtils;
 import com.springwater.easybot.utils.GeyserUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -32,7 +33,7 @@ public class PlayerEvents implements Listener {
 
     @EventHandler
     public void reportPlayerOnLogin(PlayerLoginEvent event) {
-        String ip = getPlayerIp(event.getPlayer());
+        String ip = BridgeUtils.getPlayerIp(event.getPlayer());
         new Thread(() -> Easybot.getClient().reportPlayer(
                 GeyserUtils.getName(event.getPlayer()),
                 GeyserUtils.getUuid(event.getPlayer()).toString(),
@@ -42,7 +43,7 @@ public class PlayerEvents implements Listener {
 
     @EventHandler
     public void reportPlayer(PlayerJoinEvent event) {
-        String ip = getPlayerIp(event.getPlayer());
+        String ip = BridgeUtils.getPlayerIp(event.getPlayer());
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
@@ -54,17 +55,5 @@ public class PlayerEvents implements Listener {
                     GeyserUtils.getUuid(event.getPlayer()).toString(),
                     ip);
         }, "EasyBot-Thread: ReportPlayerOnJoin " + event.getPlayer().getName()).start();
-    }
-
-    public String getPlayerIp(Player player) {
-        try{
-            if (player.getAddress() == null) {
-                return "127.0.0.1";
-            } else {
-                return player.getAddress().getAddress().getHostAddress();
-            }
-        }catch (Exception ignored){
-            return "127.0.0.1";
-        }
     }
 }

@@ -42,6 +42,18 @@ public class ClientProfile {
 
     @Getter
     @Setter
+    private static boolean isOnlineMode;
+
+    @Getter
+    @Setter
     private static boolean isDebugMode;
+
+    @Getter
+    @Setter
+    private static boolean hasSkinsRestorer;
+
+    @Getter
+    @Setter
+    private static boolean hasPaperSkinApi;
 
 }

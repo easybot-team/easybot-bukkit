@@ -246,6 +246,11 @@ public class BridgeClient {
                 ClientProfile.setSyncMessageMoney(updateSyncSettingsPacket.getSyncMoney());
                 ClientProfile.setSyncMessageMode(updateSyncSettingsPacket.getSyncMode());
                 break;
+            case "PLAYER_LIST":
+                PlayerListPacket playerListPacket = new PlayerListPacket();
+                playerListPacket.setList(behavior.getPlayerList());
+                GsonUtils.merge(gson, callBack, playerListPacket);
+                break;
             default:
                 logger.info("收到未知操作: " + packet.getOperation() + " 请确保你的插件是最新版本????");
                 break;
