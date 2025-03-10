@@ -7,7 +7,8 @@ public enum SegmentType {
     IMAGE(3),
     AT(4),
     FILE(5),
-    REPLY(6);
+    REPLY(6),
+    FACE(7);
 
     private int type;
 

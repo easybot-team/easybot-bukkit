@@ -56,4 +56,12 @@ public class ClientProfile {
     @Setter
     private static boolean hasPaperSkinApi;
 
+    @Getter
+    @Setter
+    private static boolean hasItemsAdder;
+
+    @Getter
+    @Setter
+    private static boolean hasQFaces;
+
 }

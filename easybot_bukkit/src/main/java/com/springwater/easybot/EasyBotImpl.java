@@ -5,10 +5,7 @@ import com.springwater.easybot.bridge.ClientProfile;
 import com.springwater.easybot.bridge.message.*;
 import com.springwater.easybot.bridge.model.PlayerInfo;
 import com.springwater.easybot.bridge.model.ServerInfo;
-import com.springwater.easybot.utils.AtEventUtils;
-import com.springwater.easybot.utils.BridgeUtils;
-import com.springwater.easybot.utils.GeyserUtils;
-import com.springwater.easybot.utils.SkinUtils;
+import com.springwater.easybot.utils.*;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
@@ -249,7 +246,19 @@ public class EasyBotImpl implements BridgeBehavior {
                     ClickEvent.Action.OPEN_URL,
                     ((FileSegment) segment).getFileUrl()
             ));
-        }else{
+
+        } else if(segment instanceof FaceSegment) {
+            component.setColor(ChatColor.GREEN);
+            if (ClientProfile.isHasItemsAdder() && ClientProfile.isHasQFaces()){
+                String qface = ItemsAdderUtils.getFace(Integer.parseInt(((FaceSegment) segment).getId()));
+                if (qface != null){
+                    component = new TextComponent(qface);
+                    component.setColor(ChatColor.WHITE);
+                }
+            }
+        }
+        else
+        {
             component.setColor(ChatColor.WHITE);
         }
         return component;

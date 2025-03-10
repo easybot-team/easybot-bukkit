@@ -12,6 +12,7 @@ public interface Segment {
             case AT:      return AtSegment.class;
             case FILE:    return FileSegment.class;
             case REPLY:   return ReplySegment.class;
+            case FACE:    return FaceSegment.class;
             default:      return null;
         }
     }

@@ -6,25 +6,11 @@
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleHome" value="$APPLICATION_HOME_DIR$/plugins/gradle-8.1.1" />
-        <option name="gradleJvm" value="openjdk-20" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/easybot_bridge" />
             <option value="$PROJECT_DIR$/easybot_bukkit" />
-          </set>
-        </option>
-      </GradleProjectSettings>
-      <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/easybot_mod" />
-        <option name="gradleHome" value="$APPLICATION_HOME_DIR$/plugins/gradle-8.1.1" />
-        <option name="modules">
-          <set>
-            <option value="$PROJECT_DIR$/easybot_mod" />
-            <option value="$PROJECT_DIR$/easybot_mod/common" />
-            <option value="$PROJECT_DIR$/easybot_mod/fabric" />
-            <option value="$PROJECT_DIR$/easybot_mod/forge" />
-            <option value="$PROJECT_DIR$/easybot_mod/neoforge" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -12,6 +12,7 @@ import com.springwater.easybot.papi.EasyBotExpansion;
 import com.springwater.easybot.papi.OfflineStatisticExpansion;
 import com.springwater.easybot.task.TaskManager;
 import com.springwater.easybot.utils.BukkitUtils;
+import com.springwater.easybot.utils.ItemsAdderUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -73,6 +74,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         handleGeyserCompatibility();
         handleBungeeChatCompatibility();
         handleSkinsRestorerCompatibility();
+        handleItemsAdderCompatibility();
 
         bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
         bridgeClient.setToken(getConfig().getString("service.token"));
@@ -95,6 +97,15 @@ public final class Easybot extends JavaPlugin implements Listener {
         } else if (!ClientProfile.isOnlineMode()) {
             getLogger().info("\u001B[31m※ 当前服务器为离线服务器,且你并未安装\u001B[32mSkinsRestorer\u001B[31m插件,这会导致获取玩家皮肤不正确！\u001B[0m");
         }
+    }
+
+    private void handleItemsAdderCompatibility() {
+        if(ItemsAdderUtils.isItemsAdderInstalled()){
+            getLogger().info("\u001B[32m※ 检测到ItemsAdder插件！\u001B[0m");
+            ClientProfile.setHasItemsAdder(true);
+            Bukkit.getPluginManager().registerEvents(new ItemsAdderEvents(), this);
+        }
+
     }
 
     private void onlineModeCheck() {
