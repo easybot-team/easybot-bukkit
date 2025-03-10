@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PlayerInfo {
+public class    PlayerInfo {
     @SerializedName("player_name")
     private String playerName;
 

@@ -221,14 +221,16 @@ public class BridgeClient {
                 GsonUtils.merge(gson, callBack, runCommandResultPacket);
                 break;
             case "SEND_TO_CHAT":
-                SendToChatPacket sendToChatPacket = gson.fromJson(message, SendToChatPacket.class);
-                if (sendToChatPacket.getExtra() == null) {
+                SendToChatOldPacket sendToChatPacket = gson.fromJson(message, SendToChatOldPacket.class);
+                JsonObject sendToChatPacketRaw = gson.fromJson(message, JsonObject.class);
+                JsonElement extra = sendToChatPacketRaw.get("extra");
+                if (extra == null || extra.isJsonNull()) {
                     behavior.SyncToChat(sendToChatPacket.getText());
                     break;
                 }
-
+                SendToChatPacket sendToChatPacketNew = gson.fromJson(message, SendToChatPacket.class);
                 List<Segment> segments = StreamSupport.stream(
-                                sendToChatPacket.getExtra().getAsJsonArray().spliterator(), false
+                                sendToChatPacketNew.getExtra().getAsJsonArray().spliterator(), false
                         )
                         .map(JsonElement::getAsJsonObject)
                         .map(extraObject -> {

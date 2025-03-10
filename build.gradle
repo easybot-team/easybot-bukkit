@@ -2,6 +2,10 @@ plugins {
     id 'java'
 }
 
+repositories {
+    maven { url 'https://maven.neoforged.net/releases/' }
+}
+
 group = 'com.springwater.easybot'
 version = '1.0-SNAPSHOT'
 

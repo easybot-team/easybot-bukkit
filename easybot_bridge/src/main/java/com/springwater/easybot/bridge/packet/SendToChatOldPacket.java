@@ -7,9 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SendToChatPacket extends PacketWithCallBackId{
+public class SendToChatOldPacket extends PacketWithCallBackId{
     @SerializedName("text")
     private String text;
-    @SerializedName("extra")
-    private JsonArray extra;
 }
+
+

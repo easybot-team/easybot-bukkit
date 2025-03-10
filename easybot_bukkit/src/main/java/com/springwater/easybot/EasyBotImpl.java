@@ -2,10 +2,7 @@ package com.springwater.easybot;
 
 import com.springwater.easybot.bridge.BridgeBehavior;
 import com.springwater.easybot.bridge.ClientProfile;
-import com.springwater.easybot.bridge.message.AtSegment;
-import com.springwater.easybot.bridge.message.FileSegment;
-import com.springwater.easybot.bridge.message.ImageSegment;
-import com.springwater.easybot.bridge.message.Segment;
+import com.springwater.easybot.bridge.message.*;
 import com.springwater.easybot.bridge.model.PlayerInfo;
 import com.springwater.easybot.bridge.model.ServerInfo;
 import com.springwater.easybot.utils.AtEventUtils;
@@ -19,9 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -123,9 +118,35 @@ public class EasyBotImpl implements BridgeBehavior {
         try {
             ComponentBuilder builder = new ComponentBuilder("");
 
-            for (Segment segment : segments) {
+            Queue<Segment> queue = new LinkedList<>(segments);
+            StringBuilder currentText = new StringBuilder();  // 使用StringBuilder合并文本
+            List<Segment> segmentsToAdd = new ArrayList<>();
+
+            while (!queue.isEmpty()) {
+                Segment segment = queue.poll();
+                if (segment instanceof TextSegment) {
+                    currentText.append(segment.getText());  // 直接用StringBuilder追加文本
+                } else {
+                    if (currentText.length() > 0) {  // 如果有文本累积，则添加合并的TextSegment
+                        TextSegment combinedTextSegment = new TextSegment();
+                        combinedTextSegment.setText(currentText.toString());
+                        segmentsToAdd.add(combinedTextSegment);
+                        currentText.setLength(0);  // 重置StringBuilder
+                    }
+                    segmentsToAdd.add(segment);  // 直接添加非TextSegment的部分
+                }
+            }
+
+            if (currentText.length() > 0) {
+                TextSegment combinedTextSegment = new TextSegment();
+                combinedTextSegment.setText(currentText.toString());
+                segmentsToAdd.add(combinedTextSegment);
+            }
+
+            for (Segment segment : segmentsToAdd) {
                 builder.append(toComponent(segment));
             }
+
 
             List<String> atPlayerNames = segments.stream()
                     .filter(x -> x instanceof AtSegment)
@@ -143,7 +164,17 @@ public class EasyBotImpl implements BridgeBehavior {
                     AtEventUtils.at(p.getPlayer());
                 }
 
-                p.sendMessage(builder.create());
+                try {
+                    try {
+                        p.spigot().sendMessage(builder.create());
+                    } catch (Exception ignored) {
+                        p.sendMessage(builder.create());
+                    }
+                } catch (Exception ex) {
+                    logger.warning(ex.getMessage());
+                    logger.warning("将群内消息转换为Minecraft格式消息时遇到错误,将向玩家发送原始信息!");
+                    Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
+                }
             }));
         } catch (Exception ex) {
             logger.warning(ex.getMessage());
@@ -169,7 +200,7 @@ public class EasyBotImpl implements BridgeBehavior {
 
 
     private BaseComponent toComponent(Segment segment) {
-        TextComponent component = new TextComponent(segment.getText());
+        TextComponent component = new TextComponent(TextComponent.fromLegacyText(segment.getText()));
         if (segment instanceof AtSegment) {
             component.setColor(ChatColor.GOLD);
             String[] atPlayerNames = ((AtSegment) segment).getAtPlayerNames();
@@ -218,7 +249,7 @@ public class EasyBotImpl implements BridgeBehavior {
                     ClickEvent.Action.OPEN_URL,
                     ((FileSegment) segment).getFileUrl()
             ));
-        } else {
+        }else{
             component.setColor(ChatColor.WHITE);
         }
         return component;

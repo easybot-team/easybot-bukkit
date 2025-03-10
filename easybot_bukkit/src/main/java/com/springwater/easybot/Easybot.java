@@ -32,8 +32,8 @@ public final class Easybot extends JavaPlugin implements Listener {
     private static UpdateChecker updateChecker = new UpdateChecker();
     private static TaskManager taskManager = new TaskManager();
 
-    EasyBotExpansion easyBotExpansion;
-    OfflineStatisticExpansion offlineStatisticExpansion;
+    public static EasyBotExpansion easyBotExpansion;
+    public static OfflineStatisticExpansion offlineStatisticExpansion;
 
     public static BridgeClient getClient() {
         return bridgeClient;
@@ -217,6 +217,8 @@ public final class Easybot extends JavaPlugin implements Listener {
                 getLogger().warning("× 离线变量 (ez-statistic只支持1.15+的服务器!)");
             }
 
+            getServer().getPluginManager().registerEvents(new PapiReloadEvents(), this);
+
             getLogger().info("  \u001B[32m[OK]\u001B[0m 占位符");
             ClientProfile.setPapiSupported(true);
         } else {
@@ -232,7 +234,6 @@ public final class Easybot extends JavaPlugin implements Listener {
     }
 
     private void uninstallPlaceholderApi() {
-
         if (BukkitUtils.placeholderApiInstalled()) {
             if (easyBotExpansion != null) {
                 easyBotExpansion.unregister();
