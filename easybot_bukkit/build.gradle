@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.springwater.easybot'
-version = '2.0.4'
+version = '2.0.6'
 
 repositories {
     mavenCentral()
@@ -57,6 +57,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("net.kyori:adventure-api:4.17.0")
+    compileOnly("net.kyori:adventure-text-serializer-legacy:4.17.0")
     compileOnly("org.geysermc.api:base-api:1.0.1")
     compileOnly("org.geysermc.floodgate:api:2.1.1-SNAPSHOT")
 

@@ -1,9 +1,9 @@
 package com.springwater.easybot.utils;
 
-import com.destroystokyo.paper.profile.PlayerProfile;
 import org.bukkit.Bukkit;
 
 import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 public class BukkitUtils {
     public static String tryGetServerDescription() {
@@ -11,6 +11,17 @@ public class BukkitUtils {
             return Bukkit.getName() + " " + Bukkit.getBukkitVersion();
         } catch (Exception ignored) {
             return "%过于冷门的服务端%";
+        }
+    }
+
+    public static boolean canCreateCommandSender() {
+        try {
+            // 找 public static @NotNull CommandSender createCommandSender(@NotNull Consumer<? super Component> feedback)
+            Class.forName("org.bukkit.Bukkit")
+                    .getMethod("createCommandSender", Consumer.class);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -36,7 +47,7 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean hasPlayerChatPlugin(){
+    public static boolean hasPlayerChatPlugin() {
         try {
             Class.forName("cn.handyplus.chat.event.PlayerChannelChatEvent");
             return true;
@@ -45,16 +56,16 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean canUsePlayerChatEvent(){
-        try{
+    public static boolean canUsePlayerChatEvent() {
+        try {
             Class.forName("cn.handyplus.chat.event.PlayerChannelChatEvent").getMethod("getOriginalMessage");
             return true;
-        }catch(Exception e){
+        } catch (Exception e) {
             return false;
         }
     }
 
-    public static boolean hasRedisChatPlugin(){
+    public static boolean hasRedisChatPlugin() {
         try {
             Class.forName("dev.unnm3d.redischat.api.events.AsyncRedisChatMessageEvent");
             return true;
@@ -63,20 +74,20 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean isSupportStatistic(){
-        try{
+    public static boolean isSupportStatistic() {
+        try {
             Method[] methods = Class.forName("org.bukkit.OfflinePlayer").getMethods();
-            for(Method method : methods){
-                if(method.getName().equals("getStatistic"))
+            for (Method method : methods) {
+                if (method.getName().equals("getStatistic"))
                     return true;
             }
             return false;
-        }catch(Exception e){
+        } catch (Exception e) {
             return false;
         }
     }
 
-    public static boolean hasGeyserMc(){
+    public static boolean hasGeyserMc() {
         try {
             Class.forName("org.geysermc.api.BuildData");
             return true;
@@ -85,7 +96,7 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean hasFloodgate(){
+    public static boolean hasFloodgate() {
         try {
             Class.forName("org.geysermc.floodgate.api.player.FloodgatePlayer");
             return true;
@@ -94,7 +105,7 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean hasBungeeChatApi(){
+    public static boolean hasBungeeChatApi() {
         try {
             Class.forName("net.md_5.bungee.api.chat.BaseComponent");
             return true;
@@ -103,7 +114,7 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean hasSkinsRestorer(){
+    public static boolean hasSkinsRestorer() {
         try {
             Class.forName("net.skinsrestorer.api.SkinsRestorerProvider");
             return true;
@@ -112,7 +123,7 @@ public class BukkitUtils {
         }
     }
 
-    public static boolean hasPaperSkinApi(){
+    public static boolean hasPaperSkinApi() {
         try {
 
             Class.forName("com.destroystokyo.paper.profile.PlayerProfile");

@@ -2,9 +2,12 @@ package com.springwater.easybot.api;
 
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.rcon.NativeRcon;
+import com.springwater.easybot.utils.BukkitUtils;
 import com.springwater.easybot.utils.ReflectionUtils;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.glavo.rcon.AuthenticationException;
 
@@ -13,6 +16,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommandApi {
     private Object dedicatedServer;
@@ -21,10 +26,14 @@ public class CommandApi {
     public CommandApi() throws IllegalAccessException {
         FileConfiguration config = Easybot.instance.getConfig();
         boolean useNativeRcon = config.getBoolean("adapter.native_rcon.use_native_rcon", false);
-        if(useNativeRcon){
+        if (useNativeRcon) {
             nativeRcon = new NativeRcon();
             Easybot.instance.getLogger().info("命令接口初始化成功 [原生RCON接口]");
             return;
+        }
+
+        if(BukkitUtils.canCreateCommandSender()){
+            Easybot.instance.getLogger().info("找到高版本命令接口,将优先使用此接口!");
         }
 
         Server server = Bukkit.getServer();
@@ -38,26 +47,15 @@ public class CommandApi {
         }
     }
 
-    public void startNativeRcon() throws AuthenticationException, IOException {
-        nativeRcon.start();
-    }
-
-    public void closeNativeRcon(){
-        if(nativeRcon == null){
-            return;
-        }
-        nativeRcon.close();
-    }
-
     private static Class<?> getRconConsoleSourceClassPath() throws ClassNotFoundException {
         // 捏🐎的 为什么这东西还有两种名字
         // 不同版本可能有不同的别名,是不是还有混淆之后的名字啊!?! 啊?
-        try{
+        try {
             return Class.forName("net.minecraft.server.rcon.RconConsoleSource");
         } catch (ClassNotFoundException ignored) {
         }
 
-        try{
+        try {
             return Class.forName("net.minecraft.server.rcon.RemoteControlCommandListener");
         } catch (ClassNotFoundException ignored) {
         }
@@ -65,15 +63,42 @@ public class CommandApi {
         throw new ClassNotFoundException("Can not find RconConsoleSource class path");
     }
 
-    public void runCommandAsConsole(String command){
+    public void startNativeRcon() throws AuthenticationException, IOException {
+        nativeRcon.start();
+    }
+
+    public void closeNativeRcon() {
+        if (nativeRcon == null) {
+            return;
+        }
+        nativeRcon.close();
+    }
+
+    public void runCommandAsConsole(String command) {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 
 
     // 本质上是冒充RCON执行命令
     public String runCommand(String command) {
-        if(nativeRcon != null){
+        if (nativeRcon != null) {
             return nativeRcon.executeCommand(command);
+        }
+
+        try {
+            if (BukkitUtils.canCreateCommandSender()) {
+                List<String> messages = new ArrayList<>();
+                CommandSender sender = Bukkit.createCommandSender(feedback -> {
+                    messages.add(
+                            LegacyComponentSerializer.legacy('§').serialize(feedback)
+                    );
+                });
+                Easybot.instance.runTask(() -> Bukkit.dispatchCommand(sender, command));
+                Thread.sleep(500);
+                return String.join("\n", messages);
+            }
+        } catch (Exception ignored) {
+
         }
 
         try {
@@ -113,7 +138,6 @@ public class CommandApi {
         } catch (NoSuchMethodException | ClassNotFoundException | InstantiationException |
                  IllegalAccessException | InvocationTargetException ignored) {
         }
-
 
 
         try {

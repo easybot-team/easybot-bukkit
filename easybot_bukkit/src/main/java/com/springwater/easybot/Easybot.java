@@ -245,16 +245,20 @@ public final class Easybot extends JavaPlugin implements Listener {
     }
 
     private void uninstallPlaceholderApi() {
-        if (BukkitUtils.placeholderApiInstalled()) {
-            if (easyBotExpansion != null) {
-                easyBotExpansion.unregister();
-                easyBotExpansion = null;
-            }
+        try {
+            if (BukkitUtils.placeholderApiInstalled()) {
+                if (easyBotExpansion != null) {
+                    easyBotExpansion.unregister();
+                    easyBotExpansion = null;
+                }
 
-            if (offlineStatisticExpansion != null) {
-                offlineStatisticExpansion.unregister();
-                offlineStatisticExpansion = null;
+                if (offlineStatisticExpansion != null) {
+                    offlineStatisticExpansion.unregister();
+                    offlineStatisticExpansion = null;
+                }
             }
+        } catch (Exception e) {
+            // ignore
         }
     }
 
@@ -289,6 +293,8 @@ public final class Easybot extends JavaPlugin implements Listener {
     @EventHandler
     public void onServerStarted(ServerLoadEvent event) {
         if (event.getType() == ServerLoadEvent.LoadType.STARTUP) {
+            boolean useNativeRcon = getConfig().getBoolean("adapter.native_rcon.use_native_rcon", false);
+            if (!useNativeRcon) return;
             Thread rconThread = new Thread(() -> {
                 try {
                     getLogger().info("10s后启动原生RCON,请耐心等待!");
