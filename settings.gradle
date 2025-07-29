@@ -1,3 +1,2 @@
-rootProject.name = "easybot.root"
-include 'easybot_bridge'
-include 'easybot_bukkit'
+rootProject.name = 'easybot_bukkit'
+include ':easybot_bridge'
