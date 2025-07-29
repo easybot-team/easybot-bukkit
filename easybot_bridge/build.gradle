@@ -14,8 +14,8 @@ dependencies {
     implementation 'org.eclipse.jetty.websocket:websocket-client:9.4.55.v20240627'
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    compileOnly 'org.projectlombok:lombok:1.18.28'
-    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
 }
 
 test {
