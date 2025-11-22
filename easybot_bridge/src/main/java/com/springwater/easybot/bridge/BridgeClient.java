@@ -171,6 +171,9 @@ public class BridgeClient implements WebSocketListener {
                 }
                 break;
             }
+            case HeartBeat: {
+                break;
+            }
             default: {
                 logger.info("收到未知 OpCode: " + packet.getOpCode());
             }
