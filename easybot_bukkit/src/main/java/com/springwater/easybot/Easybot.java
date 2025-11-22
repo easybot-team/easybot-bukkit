@@ -314,6 +314,7 @@ public final class Easybot extends JavaPlugin implements Listener {
                 commandApi.closeNativeRcon();
                 commandApi = new CommandApi();
                 commandApi.startNativeRcon();
+                ClientProfile.setCommandSupported(true);
             }
         } catch (Exception e) {
             getLogger().severe(e + "");
