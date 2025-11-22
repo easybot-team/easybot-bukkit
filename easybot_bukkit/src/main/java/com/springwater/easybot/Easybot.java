@@ -30,7 +30,6 @@ public final class Easybot extends JavaPlugin implements Listener {
     private static CommandApi commandApi;
     private static BridgeClient bridgeClient;
     private static BridgeBehavior bridgeBehavior;
-    private static UpdateChecker updateChecker = new UpdateChecker();
     private static TaskManager taskManager = new TaskManager();
 
     public static EasyBotExpansion easyBotExpansion;
@@ -78,7 +77,6 @@ public final class Easybot extends JavaPlugin implements Listener {
 
         bridgeClient = new BridgeClient(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"), bridgeBehavior);
         bridgeClient.setToken(getConfig().getString("service.token"));
-        updateChecker.start();
         putTasks();
     }
 
@@ -180,7 +178,6 @@ public final class Easybot extends JavaPlugin implements Listener {
     }
 
     public void reload() {
-        updateChecker.stop();
         reloadConfig();
         ClientProfile.setPluginVersion(getDescription().getVersion());
         ClientProfile.setServerDescription(BukkitUtils.tryGetServerDescription());
@@ -189,7 +186,6 @@ public final class Easybot extends JavaPlugin implements Listener {
         bridgeClient.setToken(getConfig().getString("service.token"));
         bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
         bridgeClient.stop();
-        updateChecker.start();
         putTasks();
     }
 
@@ -269,7 +265,6 @@ public final class Easybot extends JavaPlugin implements Listener {
             bridgeClient = null;
         }
         uninstallPlaceholderApi();
-        updateChecker.stop();
         taskManager.clearAllTasks();
     }
 
