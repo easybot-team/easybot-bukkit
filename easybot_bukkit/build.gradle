@@ -13,6 +13,10 @@ repositories {
         url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
     }
     maven {
+        name = "spigotmc-repo2"
+        url = "https://hub.spigotmc.org/nexus/repository/public/"
+    }
+    maven {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
