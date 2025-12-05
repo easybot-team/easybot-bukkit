@@ -9,6 +9,13 @@ version = '2.0.8'
 repositories {
     mavenCentral()
     maven {
+        url = uri("https://maven.pkg.github.com/easybot-team/easybot-bridge")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+        }
+    }
+    maven {
         name = "spigotmc-repo"
         url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
     }
@@ -53,7 +60,7 @@ tasks.build.dependsOn(tasks.shadowJar)
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT"
-    implementation(project(":easybot_bridge"))
+    implementation 'com.springwater.easybot:easybot-bridge:1.1-SNAPSHOT'
     implementation 'org.javassist:javassist:3.28.0-GA'
     implementation 'bot.inker.acj:runtime:1.5'
     implementation 'org.reflections:reflections:0.10.2'
