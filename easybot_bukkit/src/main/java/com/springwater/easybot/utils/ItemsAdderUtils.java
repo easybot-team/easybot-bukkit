@@ -14,14 +14,10 @@ public class ItemsAdderUtils {
     }
 
     public static boolean isQFacesInstalled() {
-        try{
-            if(!isItemsAdderInstalled()){
-                return false;
-            }
-            return new FontImageWrapper("qqnt_sysface_res:qface_0").exists();
-        } catch (Exception e) {
+        if(!isItemsAdderInstalled()){
             return false;
         }
+        return new FontImageWrapper("qqnt_sysface_res:qface_0").exists();
     }
 
     public static String getFace(int faceId) {
