@@ -1,0 +1,67 @@
+name: Auto Build on Push
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 22
+        uses: actions/setup-java@v4
+        with:
+          java-version: '22'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+
+      - name: Get Short SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run shadowJar
+        run: ./gradlew shadowJar
+        env:
+          USERNAME: ${{ github.actor }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename Artifacts with Commit Hash
+        run: |
+          echo "Current Commit Hash: ${{ steps.vars.outputs.sha_short }}"
+          cd build/libs
+          
+          for file in *.jar; do
+            if [[ "$file" != *"-source.jar" ]]; then
+              filename="${file%.*}"
+              extension="${file##*.}"
+              # 这里的格式是: 原名-CommitHash.jar
+              mv "$file" "${filename}-${{ steps.vars.outputs.sha_short }}.${extension}"
+            fi
+          done
+          
+          # Can Can Need Result
+          ls -l
+
+      - name: Update Nightly Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-dev       # 固定的 Tag 名字
+          name: "Latest Development Build"
+          body: "Auto-build from commit: ${{ github.sha }}"
+          prerelease: true           # 标记为预发布
+          files: build/libs/*.jar    # 上传刚才改名后的文件
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
