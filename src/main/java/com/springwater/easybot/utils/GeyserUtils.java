@@ -7,6 +7,7 @@ import org.geysermc.api.Geyser;
 import org.geysermc.api.GeyserApiBase;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -25,7 +26,7 @@ public class GeyserUtils {
         return player.getName();
     }
 
-    public static String getName(Player player) {
+    public static String getNameByPlayer(Player player) {
         if (ClientProfile.isHasFloodgate()) {
             FloodgatePlayer conn = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
             if (conn != null) {
@@ -34,15 +35,25 @@ public class GeyserUtils {
         }
         return player.getName();
     }
+    
+    public static @Nullable String getName(UUID player) {
+        if (ClientProfile.isHasFloodgate()) {
+            FloodgatePlayer conn = FloodgateApi.getInstance().getPlayer(player);
+            if (conn != null) {
+                return toggle() ? conn.getUsername() : conn.getJavaUsername();
+            }
+        }
+        return null;
+    }
 
-    public static UUID getUuid(Player player) {
-        if (ClientProfile.isHasFloodgate() && toggle()) {
-            FloodgatePlayer conn = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
+    public static UUID getUuid(UUID uuid) {
+        if (ClientProfile.isHasFloodgate()) {
+            FloodgatePlayer conn = FloodgateApi.getInstance().getPlayer(uuid);
             if (conn != null) {
                 return conn.getJavaUniqueId();
             }
         }
-        return player.getUniqueId();
+        return uuid;
     }
 
     public static boolean isBedrock(Player player) {

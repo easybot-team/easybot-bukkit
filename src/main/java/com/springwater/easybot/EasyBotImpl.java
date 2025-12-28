@@ -79,7 +79,7 @@ public class EasyBotImpl implements BridgeBehavior {
                         .replace("&", "§")
                         .replace("#account", accountId)
                         .replace("#name", accountName);
-                onlinePlayer.sendMessage(message);
+                onlinePlayer.sendMessage(message);  
             }
 
             if (Easybot.instance.getConfig().getBoolean("event.enable_success_event", false)) {
@@ -152,9 +152,9 @@ public class EasyBotImpl implements BridgeBehavior {
 
             Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(p -> {
                 // 判断玩家名字是否在atPlayerNames中,忽略大小写
-                boolean hasAt = atPlayerNames.stream().anyMatch(x -> x.equalsIgnoreCase(GeyserUtils.getName(p)));
+                boolean hasAt = atPlayerNames.stream().anyMatch(x -> x.equalsIgnoreCase(GeyserUtils.getNameByPlayer(p)));
                 if (!hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.find", true)) {
-                    hasAt = text.contains(GeyserUtils.getName(p));
+                    hasAt = text.contains(GeyserUtils.getNameByPlayer(p));
                 }
 
                 if (hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.enable", true)) {
@@ -185,8 +185,8 @@ public class EasyBotImpl implements BridgeBehavior {
         return Bukkit.getOnlinePlayers().stream()
                 .map(x -> {
                     PlayerInfo info = new PlayerInfo();
-                    info.setPlayerName(GeyserUtils.getName(x));
-                    info.setPlayerUuid(GeyserUtils.getUuid(x).toString());
+                    info.setPlayerName(GeyserUtils.getNameByPlayer(x));
+                    info.setPlayerUuid(GeyserUtils.getUuid(x.getUniqueId()).toString());
                     info.setIp(BridgeUtils.getPlayerIp(x));
                     info.setBedrock(GeyserUtils.isBedrock(x));
                     info.setSkinUrl(SkinUtils.getSkin(x));
