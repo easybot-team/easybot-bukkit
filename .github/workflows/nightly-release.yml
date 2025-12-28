@@ -55,6 +55,13 @@ jobs:
           # Can Can Need Result
           ls -l
 
+      # 这一步是为了删除之前的文件
+      - name: Delete Old Release
+        # 使用 || true 忽略错误，防止第一次运行时因为没有 release 而报错
+        run: gh release delete latest-dev --cleanup-tag -y || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update Nightly Release
         uses: softprops/action-gh-release@v2
         with:

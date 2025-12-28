@@ -7,9 +7,9 @@ import org.bukkit.entity.Player;
 public class BridgeUtils {
     public static PlayerInfoWithRaw buildPlayerInfoFull(Player player){
         PlayerInfoWithRaw playerInfoWithRaw = new PlayerInfoWithRaw();
-        playerInfoWithRaw.setName(GeyserUtils.getName(player));
+        playerInfoWithRaw.setName(GeyserUtils.getNameByPlayer(player));
         playerInfoWithRaw.setNameRaw(GeyserUtils.getNameRaw(player));
-        playerInfoWithRaw.setUuid(GeyserUtils.getUuid(player).toString());
+        playerInfoWithRaw.setUuid(GeyserUtils.getUuid(player.getUniqueId()).toString());
         playerInfoWithRaw.setIp("");
         return playerInfoWithRaw;
     }
