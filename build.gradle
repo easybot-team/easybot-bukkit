@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.springwater.easybot'
-version = '2.0.8'
+version = '2.1.1'
 
 repositories {
     mavenCentral()
@@ -60,7 +60,7 @@ tasks.build.dependsOn(tasks.shadowJar)
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT"
-    implementation 'com.springwater.easybot:easybot-bridge:1.2-SNAPSHOT'
+    implementation 'com.springwater.easybot:easybot-bridge:1.4-SNAPSHOT'
     implementation 'org.javassist:javassist:3.28.0-GA'
     implementation 'bot.inker.acj:runtime:1.5'
     implementation 'org.reflections:reflections:0.10.2'

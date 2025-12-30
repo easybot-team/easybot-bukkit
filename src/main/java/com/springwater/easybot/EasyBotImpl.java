@@ -112,6 +112,10 @@ public class EasyBotImpl implements BridgeBehavior {
 
     @Override
     public void SyncToChatExtra(List<Segment> segments, String text) {
+        if (!ChatCompatUtil.hasAppendMethod()) {
+            Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
+            return;
+        }
         try {
             ComponentBuilder builder = new ComponentBuilder("");
 
@@ -152,9 +156,9 @@ public class EasyBotImpl implements BridgeBehavior {
 
             Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(p -> {
                 // 判断玩家名字是否在atPlayerNames中,忽略大小写
-                boolean hasAt = atPlayerNames.stream().anyMatch(x -> x.equalsIgnoreCase(GeyserUtils.getName(p)));
+                boolean hasAt = atPlayerNames.stream().anyMatch(x -> x.equalsIgnoreCase(GeyserUtils.getNameByPlayer(p)));
                 if (!hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.find", true)) {
-                    hasAt = text.contains(GeyserUtils.getName(p));
+                    hasAt = text.contains(GeyserUtils.getNameByPlayer(p));
                 }
 
                 if (hasAt && Easybot.instance.getConfig().getBoolean("event.on_at.enable", true)) {
@@ -185,8 +189,8 @@ public class EasyBotImpl implements BridgeBehavior {
         return Bukkit.getOnlinePlayers().stream()
                 .map(x -> {
                     PlayerInfo info = new PlayerInfo();
-                    info.setPlayerName(GeyserUtils.getName(x));
-                    info.setPlayerUuid(GeyserUtils.getUuid(x).toString());
+                    info.setPlayerName(GeyserUtils.getNameByPlayer(x));
+                    info.setPlayerUuid(GeyserUtils.getUuid(x.getUniqueId()).toString());
                     info.setIp(BridgeUtils.getPlayerIp(x));
                     info.setBedrock(GeyserUtils.isBedrock(x));
                     info.setSkinUrl(SkinUtils.getSkin(x));
@@ -247,18 +251,16 @@ public class EasyBotImpl implements BridgeBehavior {
                     ((FileSegment) segment).getFileUrl()
             ));
 
-        } else if(segment instanceof FaceSegment) {
+        } else if (segment instanceof FaceSegment) {
             component.setColor(ChatColor.GREEN);
-            if (ClientProfile.isHasItemsAdder() && ClientProfile.isHasQFaces()){
+            if (ClientProfile.isHasItemsAdder() && ClientProfile.isHasQFaces()) {
                 String qface = ItemsAdderUtils.getFace(Integer.parseInt(((FaceSegment) segment).getId()));
-                if (qface != null){
+                if (qface != null) {
                     component = new TextComponent(qface);
                     component.setColor(ChatColor.WHITE);
                 }
             }
-        }
-        else
-        {
+        } else {
             component.setColor(ChatColor.WHITE);
         }
         return component;
