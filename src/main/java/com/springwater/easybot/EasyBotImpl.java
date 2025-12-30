@@ -79,7 +79,7 @@ public class EasyBotImpl implements BridgeBehavior {
                         .replace("&", "§")
                         .replace("#account", accountId)
                         .replace("#name", accountName);
-                onlinePlayer.sendMessage(message);  
+                onlinePlayer.sendMessage(message);
             }
 
             if (Easybot.instance.getConfig().getBoolean("event.enable_success_event", false)) {
@@ -112,6 +112,10 @@ public class EasyBotImpl implements BridgeBehavior {
 
     @Override
     public void SyncToChatExtra(List<Segment> segments, String text) {
+        if (!ChatCompatUtil.hasAppendMethod()) {
+            Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
+            return;
+        }
         try {
             ComponentBuilder builder = new ComponentBuilder("");
 
@@ -247,18 +251,16 @@ public class EasyBotImpl implements BridgeBehavior {
                     ((FileSegment) segment).getFileUrl()
             ));
 
-        } else if(segment instanceof FaceSegment) {
+        } else if (segment instanceof FaceSegment) {
             component.setColor(ChatColor.GREEN);
-            if (ClientProfile.isHasItemsAdder() && ClientProfile.isHasQFaces()){
+            if (ClientProfile.isHasItemsAdder() && ClientProfile.isHasQFaces()) {
                 String qface = ItemsAdderUtils.getFace(Integer.parseInt(((FaceSegment) segment).getId()));
-                if (qface != null){
+                if (qface != null) {
                     component = new TextComponent(qface);
                     component.setColor(ChatColor.WHITE);
                 }
             }
-        }
-        else
-        {
+        } else {
             component.setColor(ChatColor.WHITE);
         }
         return component;
