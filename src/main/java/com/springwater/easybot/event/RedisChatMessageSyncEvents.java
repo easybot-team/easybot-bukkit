@@ -3,6 +3,7 @@ package com.springwater.easybot.event;
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerInfoWithRaw;
 import com.springwater.easybot.utils.BridgeUtils;
+import com.springwater.easybot.utils.FakePlayerUtils;
 import dev.unnm3d.redischat.api.events.AsyncRedisChatMessageEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
@@ -17,6 +18,7 @@ public class RedisChatMessageSyncEvents implements Listener {
         if(!event.isCancelled()){
             if(event.getSender() instanceof Player){
                 Player player = (Player) event.getSender();
+                if(FakePlayerUtils.isFake(player)) return;
                 PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(player);
                 String message = PlainTextComponentSerializer.plainText().serialize(event.getContent());
                 new Thread(() -> Easybot.getClient().syncMessage(playerInfo, message, false), "EasyBotThread-SyncMessage(PlayerChat)").start();

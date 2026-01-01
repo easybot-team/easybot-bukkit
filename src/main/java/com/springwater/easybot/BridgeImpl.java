@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class EasyBotImpl implements BridgeBehavior {
+public class BridgeImpl implements BridgeBehavior {
     private final Logger logger = Logger.getLogger("EasyBotImpl");
 
     @Override
@@ -187,6 +187,7 @@ public class EasyBotImpl implements BridgeBehavior {
     @Override
     public List<PlayerInfo> getPlayerList() {
         return Bukkit.getOnlinePlayers().stream()
+                .filter(FakePlayerUtils::isNotFake)
                 .map(x -> {
                     PlayerInfo info = new PlayerInfo();
                     info.setPlayerName(GeyserUtils.getNameByPlayer(x));

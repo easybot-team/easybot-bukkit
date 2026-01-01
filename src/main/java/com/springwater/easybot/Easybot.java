@@ -12,6 +12,7 @@ import com.springwater.easybot.papi.EasyBotExpansion;
 import com.springwater.easybot.papi.OfflineStatisticExpansion;
 import com.springwater.easybot.task.TaskManager;
 import com.springwater.easybot.utils.BukkitUtils;
+import com.springwater.easybot.utils.FakePlayerUtils;
 import com.springwater.easybot.utils.ItemsAdderUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -57,7 +58,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         ClientProfile.setDebugMode(getConfig().getBoolean("debug", false));
 
         instance = this;
-        bridgeBehavior = new EasyBotImpl();
+        bridgeBehavior = new BridgeImpl();
 
         initHooks();
 
@@ -82,11 +83,11 @@ public final class Easybot extends JavaPlugin implements Listener {
 
 
     private void handleSkinsRestorerCompatibility() {
-        if(BukkitUtils.hasSkinsRestorer() && !BukkitUtils.placeholderApiInstalled()){
+        if (BukkitUtils.hasSkinsRestorer() && !BukkitUtils.placeholderApiInstalled()) {
             getLogger().info("\u001B[31m※ 检测到SkinsRestorer插件,但未检测到PlaceholderApi插件,EasyBot获取SkinsRestorer的皮肤需要依赖PlaceholderApi！\u001B[0m");
         }
 
-        if (BukkitUtils.hasSkinsRestorer() &&   BukkitUtils.placeholderApiInstalled()) {
+        if (BukkitUtils.hasSkinsRestorer() && BukkitUtils.placeholderApiInstalled()) {
             getLogger().info("\u001B[32m※ 检测到SkinsRestorer插件,玩家皮肤将通过该插件获取！\u001B[0m");
             ClientProfile.setHasSkinsRestorer(true);
         } else if (BukkitUtils.hasPaperSkinApi()) {
@@ -98,7 +99,7 @@ public final class Easybot extends JavaPlugin implements Listener {
     }
 
     private void handleItemsAdderCompatibility() {
-        if(ItemsAdderUtils.isItemsAdderInstalled()){
+        if (ItemsAdderUtils.isItemsAdderInstalled()) {
             getLogger().info("\u001B[32m※ 检测到ItemsAdder插件！\u001B[0m");
             ClientProfile.setHasItemsAdder(true);
             Bukkit.getPluginManager().registerEvents(new ItemsAdderEvents(), this);
@@ -238,6 +239,12 @@ public final class Easybot extends JavaPlugin implements Listener {
             getLogger().info("\u001B[32m※ 已注册离线变量,专用文档: \u001B[33mhttps://docs.hualib.com/offline-papi.html\u001B[0m");
         }
 
+        getLogger().info("\u001B[32m[>]\u001B[0m 假人插件");
+        if (FakePlayerUtils.isInstalled()) {
+            getLogger().info("  \u001B[32m[OK]\u001B[0m 已开启假人过滤");
+        } else {
+            getLogger().info("  \u001B[32m[OK]\u001B[0m 已关闭假人过滤");
+        }
     }
 
     private void uninstallPlaceholderApi() {
