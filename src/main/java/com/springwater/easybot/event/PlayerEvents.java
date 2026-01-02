@@ -1,21 +1,18 @@
 package com.springwater.easybot.event;
 
-import com.google.errorprone.annotations.Var;
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerLoginResultPacket;
-import com.springwater.easybot.utils.BridgeUtils;
+import com.springwater.easybot.utils.FakePlayerUtils;
 import com.springwater.easybot.utils.GeyserUtils;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 
 public class PlayerEvents implements Listener {
     @EventHandler
     public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
         try {
+            if(FakePlayerUtils.isFake(event.getName())) return;
             String ip = event.getAddress().getHostAddress();
             String name = GeyserUtils.getName(event.getUniqueId());
             if (name == null) name = event.getPlayerProfile().getName();

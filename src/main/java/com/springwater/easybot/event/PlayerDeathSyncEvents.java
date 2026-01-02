@@ -3,6 +3,7 @@ package com.springwater.easybot.event;
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerInfoWithRaw;
 import com.springwater.easybot.utils.BridgeUtils;
+import com.springwater.easybot.utils.FakePlayerUtils;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
@@ -39,6 +40,7 @@ public class PlayerDeathSyncEvents implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
         if(Easybot.instance.getConfig().getBoolean("skip_options.skip_death")) return;
+        if(FakePlayerUtils.isFake(event.getPlayer())) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getEntity());
         String deathMessage = event.getDeathMessage();
         if(deathMessage == null){
