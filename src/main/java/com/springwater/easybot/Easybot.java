@@ -292,23 +292,6 @@ public final class Easybot extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
-    public void onServerStarted(ServerLoadEvent event) {
-        if (event.getType() == ServerLoadEvent.LoadType.STARTUP) {
-            boolean useNativeRcon = getConfig().getBoolean("adapter.native_rcon.use_native_rcon", false);
-            if (!useNativeRcon) return;
-            Thread rconThread = new Thread(() -> {
-                try {
-                    getLogger().info("10s后启动原生RCON,请耐心等待!");
-                    Thread.sleep(10000);
-                } catch (InterruptedException ignored) {
-                }
-                restartNativeRcon();
-            }, "EasyBot-Rcon-Thread");
-            rconThread.start();
-        }
-    }
-
     private void restartNativeRcon() {
         try {
             boolean useNativeRcon = getConfig().getBoolean("adapter.native_rcon.use_native_rcon", false);

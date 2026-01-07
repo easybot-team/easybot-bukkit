@@ -15,7 +15,7 @@ public class PlayerEvents implements Listener {
             if(FakePlayerUtils.isFake(event.getName())) return;
             String ip = event.getAddress().getHostAddress();
             String name = GeyserUtils.getName(event.getUniqueId());
-            if (name == null) name = event.getPlayerProfile().getName();
+            if (name == null) name = event.getName();
             Easybot.getClient().reportPlayer(name, GeyserUtils.getUuid(event.getUniqueId()).toString(), ip);
             PlayerLoginResultPacket result = Easybot.getClient().login(
                     name,

@@ -29,6 +29,7 @@ public class CommandApi {
         if (useNativeRcon) {
             nativeRcon = new NativeRcon();
             Easybot.instance.getLogger().info("命令接口初始化成功 [原生RCON接口]");
+            startNativeRcon(); 
             return;
         }
 
@@ -63,8 +64,13 @@ public class CommandApi {
         throw new ClassNotFoundException("Can not find RconConsoleSource class path");
     }
 
-    public void startNativeRcon() throws AuthenticationException, IOException {
-        nativeRcon.start();
+    public void startNativeRcon() {
+        new Thread(() -> {
+            try {
+                nativeRcon.start();
+            } catch (Exception ignored) {
+            }
+        }).start();
     }
 
     public void closeNativeRcon() {
