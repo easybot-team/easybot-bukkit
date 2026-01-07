@@ -14,18 +14,22 @@ public class ItemsAdderUtils {
     }
 
     public static boolean isQFacesInstalled() {
-        if(!isItemsAdderInstalled()){
+        try {
+            if (!isItemsAdderInstalled()) {
+                return false;
+            }
+            return new FontImageWrapper("qqnt_sysface_res:qface_0").exists();
+        } catch (Exception ignored) {
             return false;
         }
-        return new FontImageWrapper("qqnt_sysface_res:qface_0").exists();
     }
 
     public static String getFace(int faceId) {
-        if(!isQFacesInstalled()){
+        if (!isQFacesInstalled()) {
             return "";
         }
         FontImageWrapper warper = new FontImageWrapper("qqnt_sysface_res:qface_" + faceId);
-        if(!warper.exists()){
+        if (!warper.exists()) {
             return null;
         }
         return warper.getString();
