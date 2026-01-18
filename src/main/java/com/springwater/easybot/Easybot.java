@@ -1,5 +1,6 @@
 package com.springwater.easybot;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.springwater.easybot.api.CommandApi;
 import com.springwater.easybot.bridge.BridgeBehavior;
 import com.springwater.easybot.bridge.BridgeClient;
@@ -23,6 +24,8 @@ import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class Easybot extends JavaPlugin implements Listener {
     public static Easybot instance;
@@ -43,6 +46,13 @@ public final class Easybot extends JavaPlugin implements Listener {
     public static CommandApi getCommandApi() {
         return commandApi;
     }
+
+    public static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder()
+                    .setNameFormat("EasyBot Task Executor - %d")
+                    .setDaemon(true)
+                    .build()
+    );
 
     @Override
     public void onEnable() {
