@@ -18,7 +18,7 @@ public class PaperSideMessageSyncEvents implements Listener {
         if(!event.isCancelled()){
             PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
             String message = PlainTextComponentSerializer.plainText().serialize(event.message());
-            new Thread(() -> Easybot.getClient().syncMessage(playerInfo,message , false), "EasyBotThread-SyncMessage(PaperSide)").start();
+            Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncMessage(playerInfo,message , false));
         }
     }
 }

@@ -31,7 +31,7 @@ public class PlayerDeathSyncEvents implements Listener {
             return damager != null ? damager.getName() : "一股神秘的力量";
         } else if (lastDamageCause instanceof EntityDamageByBlockEvent) {
             Block damager = ((EntityDamageByBlockEvent) lastDamageCause).getDamager();
-            return damager != null ? damager.getState().getData().getItemType().name() : "一股神秘的力量";
+            return damager != null ? damager.getState().getType().name() : "一股神秘的力量";
         } else {
             return "一股神秘的力量";
         }
@@ -39,19 +39,19 @@ public class PlayerDeathSyncEvents implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if(Easybot.instance.getConfig().getBoolean("skip_options.skip_death")) return;
-        if(FakePlayerUtils.isFake(event.getPlayer())) return;
+        if (Easybot.instance.getConfig().getBoolean("skip_options.skip_death")) return;
+        if (FakePlayerUtils.isFake(event.getPlayer())) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getEntity());
         String deathMessage = event.getDeathMessage();
-        if(deathMessage == null){
+        if (deathMessage == null) {
             deathMessage = event.getEntity().getName() + "  died";
         }
         final String message = deathMessage;
         String killer = getKiller(event.getEntity());
-        new Thread(() -> {
+        Easybot.EXECUTOR.execute(() -> {
             Easybot
                     .getClient()
                     .syncDeathMessage(playerInfo, message, killer);
-        }, "EasyBotThread-SyncPlayerDeath").start();
+        });
     }
 }

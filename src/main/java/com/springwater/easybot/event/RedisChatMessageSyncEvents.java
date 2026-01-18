@@ -21,7 +21,7 @@ public class RedisChatMessageSyncEvents implements Listener {
                 if(FakePlayerUtils.isFake(player)) return;
                 PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(player);
                 String message = PlainTextComponentSerializer.plainText().serialize(event.getContent());
-                new Thread(() -> Easybot.getClient().syncMessage(playerInfo, message, false), "EasyBotThread-SyncMessage(PlayerChat)").start();
+                Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncMessage(playerInfo, message, false));
             }
         }
     }
