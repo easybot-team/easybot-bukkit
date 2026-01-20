@@ -75,6 +75,10 @@ public class PlayerDeathSyncEvents implements Listener {
         }
         final String message = deathMessage;
         String killer = getKiller(event.getEntity());
-        new Thread(() -> Easybot.getClient().syncDeathMessage(playerInfo, message, killer), "EasyBotThread-SyncPlayerDeath").start();
+        Easybot.EXECUTOR.execute(() -> {
+            Easybot
+                    .getClient()
+                    .syncDeathMessage(playerInfo, message, killer);
+        });
     }
 }

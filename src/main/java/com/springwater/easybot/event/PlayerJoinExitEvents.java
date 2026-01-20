@@ -16,7 +16,7 @@ public class PlayerJoinExitEvents implements Listener {
         if(Easybot.instance.getConfig().getBoolean("skip_options.skip_join")) return;
         if(FakePlayerUtils.isFake(event.getPlayer())) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
-        new Thread(() -> Easybot.getClient().syncEnterExit(playerInfo, true), "EasyBotThread-SyncPlayerJoinMessage").start();
+        Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncEnterExit(playerInfo, true));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -24,6 +24,6 @@ public class PlayerJoinExitEvents implements Listener {
         if(Easybot.instance.getConfig().getBoolean("skip_options.skip_quit")) return;
         if(FakePlayerUtils.isFake(event.getPlayer())) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
-        new Thread(() -> Easybot.getClient().syncEnterExit(playerInfo, false), "EasyBotThread-SyncPlayerExitMessage").start();
+        Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncEnterExit(playerInfo, false));
     }
 }
