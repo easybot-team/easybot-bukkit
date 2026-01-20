@@ -16,7 +16,7 @@ public class BukkitSideMessageSyncEvents implements Listener {
         if(FakePlayerUtils.isFake(event.getPlayer())) return;
         if(!event.isCancelled()){
             PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getPlayer());
-            new Thread(() -> Easybot.getClient().syncMessage(playerInfo, event.getMessage(), false), "EasyBotThread-SyncMessage(BukkitSide)").start();
+            Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncMessage(playerInfo, event.getMessage(), false));
         }
     }
 }
