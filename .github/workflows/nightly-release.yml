@@ -47,8 +47,8 @@ jobs:
             if [[ "$file" != *"-source.jar" ]]; then
               filename="${file%.*}"
               extension="${file##*.}"
-              # 这里的格式是: 原名-CommitHash.jar
-              mv "$file" "${filename}-${{ steps.vars.outputs.sha_short }}.${extension}"
+              # 这里的格式是: 原名+CommitHash.jar
+              mv "$file" "${filename}+${{ steps.vars.outputs.sha_short }}.${extension}"
             fi
           done
           
