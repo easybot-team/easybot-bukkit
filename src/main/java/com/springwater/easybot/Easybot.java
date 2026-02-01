@@ -8,17 +8,16 @@ import com.springwater.easybot.bridge.ClientProfile;
 import com.springwater.easybot.command.EasyBotCommandExecutor;
 import com.springwater.easybot.command.SyncCommandExecutor;
 import com.springwater.easybot.event.*;
-import com.springwater.easybot.hook.HookerManager;
+import com.springwater.easybot.event.message.*;
 import com.springwater.easybot.papi.EasyBotExpansion;
 import com.springwater.easybot.papi.OfflineStatisticExpansion;
 import com.springwater.easybot.task.TaskManager;
 import com.springwater.easybot.utils.BukkitUtils;
 import com.springwater.easybot.utils.FakePlayerUtils;
 import com.springwater.easybot.utils.ItemsAdderUtils;
+import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.geysermc.floodgate.api.FloodgateApi;
 
@@ -29,22 +28,17 @@ import java.util.concurrent.Executors;
 
 public final class Easybot extends JavaPlugin implements Listener {
     public static Easybot instance;
-    private static HookerManager eventHooks;
+    //private static HookerManager eventHooks;
 
+    @Getter
     private static CommandApi commandApi;
     private static BridgeClient bridgeClient;
-    private static BridgeBehavior bridgeBehavior;
-    private static TaskManager taskManager = new TaskManager();
-
+    private static final TaskManager taskManager = new TaskManager();
     public static EasyBotExpansion easyBotExpansion;
     public static OfflineStatisticExpansion offlineStatisticExpansion;
 
     public static BridgeClient getClient() {
         return bridgeClient;
-    }
-
-    public static CommandApi getCommandApi() {
-        return commandApi;
     }
 
     public static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(
@@ -68,7 +62,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         ClientProfile.setDebugMode(getConfig().getBoolean("debug", false));
 
         instance = this;
-        bridgeBehavior = new BridgeImpl();
+        BridgeBehavior bridgeBehavior = new BridgeImpl();
 
         initHooks();
 
@@ -174,6 +168,9 @@ public final class Easybot extends JavaPlugin implements Listener {
         } else if (BukkitUtils.hasRedisChatPlugin()) {
             getLogger().info("\u001B[32m※ 检测到RedisChat插件, 您的消息事件将对接到AsyncRedisChatMessageEvent\u001B[0m");
             getServer().getPluginManager().registerEvents(new RedisChatMessageSyncEvents(), this);
+        } else if (BukkitUtils.hasVentureChat()) {
+            getLogger().info("\u001B[32m※ 检测到VentureChat插件, 您的消息事件将对接到VentureChatEvent\u001B[0m");
+            getServer().getPluginManager().registerEvents(new VentureChatMessageSyncEvents(), this);
         } else {
             registerDefaultMessageSyncEvents();
         }
@@ -295,7 +292,7 @@ public final class Easybot extends JavaPlugin implements Listener {
                 Method executeMethod = regionScheduler.getClass().getMethod("execute", org.bukkit.plugin.Plugin.class, Runnable.class);
                 executeMethod.invoke(regionScheduler, instance, task);
             } catch (Exception e) {
-                e.printStackTrace();
+                getLogger().severe(e.toString());
             }
         } else {
             Bukkit.getScheduler().runTask(instance, task);

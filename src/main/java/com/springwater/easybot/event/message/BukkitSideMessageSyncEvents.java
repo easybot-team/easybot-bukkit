@@ -1,4 +1,4 @@
-package com.springwater.easybot.event;
+package com.springwater.easybot.event.message;
 
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerInfoWithRaw;

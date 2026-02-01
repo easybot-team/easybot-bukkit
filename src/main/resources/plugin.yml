@@ -3,7 +3,7 @@ version: '${version}'
 main: com.springwater.easybot.Easybot
 api-version: '1.13'
 load: STARTUP
-softdepend: [Essentials,PlaceHolderAPI,PlayerChat,RedisChat,TrChat,Geyser-Spigot,SkinsRestorer,ItemsAdder,FakePlayer]
+softdepend: [ Essentials,PlaceHolderAPI,PlayerChat,RedisChat,TrChat,Geyser-Spigot,SkinsRestorer,ItemsAdder,FakePlayer,VentureChat ]
 folia-supported: true
 
 commands:

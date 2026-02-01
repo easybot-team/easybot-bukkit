@@ -133,4 +133,13 @@ public class BukkitUtils {
             return false;
         }
     }
+    
+    public static boolean hasVentureChat() {
+        try {
+            Class.forName("mineverse.Aust1n46.chat.MineverseChat");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 }
