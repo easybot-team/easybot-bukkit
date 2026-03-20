@@ -244,12 +244,22 @@ public class BridgeImpl implements BridgeBehavior {
             }
         } else if (segment instanceof ImageSegment) {
             component.setColor(ChatColor.GREEN);
-            component.setHoverEvent(new HoverEvent(
-                    HoverEvent.Action.SHOW_TEXT,
-                    new ComponentBuilder("§7§n点击预览 ")
-                            .append(new TextComponent("§7§n" + ((ImageSegment) segment).getUrl()))
-                            .create()
-            ));
+
+            if (Easybot.instance.getConfig().getBoolean("sync.chat_image_support", true)) {
+                component.setHoverEvent(new HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT,
+                        new ComponentBuilder("[[CICode,url=" + ((ImageSegment) segment).getUrl() + ",name=" + ((ImageSegment) segment).getSummary() + "]]")
+                                .create()
+                ));
+            } else {
+                component.setHoverEvent(new HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT,
+                        new ComponentBuilder("§7§n点击预览 ")
+                                .append(new TextComponent("§7§n" + ((ImageSegment) segment).getUrl()))
+                                .create()
+                ));
+            }
+
             component.setClickEvent(new ClickEvent(
                     ClickEvent.Action.OPEN_URL,
                     ((ImageSegment) segment).getUrl()
