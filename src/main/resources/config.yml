@@ -87,3 +87,8 @@ geyser:
   # - 启用时（True），如果基岩版玩家的前缀为 BE_。
   #   示例：BE_MiuxuE -> MiuxuE
   ignore_prefix: false
+
+# 消息同步设置
+sync:
+  # 消息同步图片时支持ChatImage
+  chat_image_support: true
