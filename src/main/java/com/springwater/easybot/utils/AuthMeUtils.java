@@ -1,12 +1,10 @@
 package com.springwater.easybot.utils;
 
-import com.springwater.easybot.Easybot;
-import org.bukkit.Bukkit;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 
-import java.util.concurrent.CompletableFuture;
-
 public class AuthMeUtils {
+    @Getter
     private static boolean isAuthMeInstalled = false;
 
     public static boolean init() {
@@ -19,21 +17,8 @@ public class AuthMeUtils {
         return isAuthMeInstalled;
     }
 
-    public Boolean isPlayerAuthenticated(String playerName) {
-        return CompletableFuture.supplyAsync(() -> {
-            CompletableFuture<Boolean> inner = new CompletableFuture<>();
-            Bukkit.getScheduler().runTask(Easybot.instance, () -> {
-                try {
-                    Player player = Bukkit.getPlayer(playerName);
-                    boolean result = player != null &&
-                            fr.xephi.authme.api.v3.AuthMeApi.getInstance().isAuthenticated(player);
-                    inner.complete(result);
-                } catch (Exception e) {
-                    inner.completeExceptionally(e);
-                }
-            });
-            return inner;
-        }).thenCompose(f -> f).join();
+    public static Boolean isPlayerAuthenticated(Player player) {
+        if (!isAuthMeInstalled) return true;
+        return fr.xephi.authme.api.v3.AuthMeApi.getInstance().isAuthenticated(player);
     }
-
 }

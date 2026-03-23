@@ -91,7 +91,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         if (AuthMeUtils.init()) {
             getLogger().info("\u001B[32m※ 检测到AuthMe,群聊登录可以正常使用！\u001B[0m");
         } else {
-            getLogger().info("\u001B[31m※ 未检测到AuthMe,群聊登录功能可能无法正常工作！\u001B[0m");
+            //getLogger().info("\u001B[31m※ 未检测到AuthMe,群聊登录功能可能无法正常工作！\u001B[0m");
         }
     }
 

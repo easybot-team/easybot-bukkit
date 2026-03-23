@@ -14,6 +14,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -196,7 +197,31 @@ public class BridgeImpl implements BridgeBehavior {
 
     @Override
     public boolean isAuthenticated(String name) {
-        return false;
+        return CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Boolean> inner = new CompletableFuture<>();
+            Easybot.instance.runTask(() -> {
+                try {
+                    Player player = Bukkit.getPlayer(name);
+                    if (player == null) {
+                        inner.complete(true); // true表示不需要登录
+                        return;
+                    }
+
+                    if (AuthMeUtils.isAuthMeInstalled()) {
+                        inner.complete(AuthMeUtils.isPlayerAuthenticated(player));
+                    }
+                    else if (LibreLoginUtils.isLibreLoginInstalled()) {
+                        inner.complete(LibreLoginUtils.isAuthenticated(player));
+                    }
+                    else {
+                        inner.complete(true);
+                    }
+                } catch (Exception e) {
+                    inner.completeExceptionally(e);
+                }
+            });
+            return inner;
+        }).thenCompose(f -> f).join();
     }
 
     @Override
