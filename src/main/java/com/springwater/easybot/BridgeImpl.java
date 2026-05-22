@@ -1,20 +1,31 @@
 package com.springwater.easybot;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.springwater.easybot.bridge.BridgeBehavior;
 import com.springwater.easybot.bridge.ClientProfile;
 import com.springwater.easybot.bridge.message.*;
 import com.springwater.easybot.bridge.model.PlayerInfo;
 import com.springwater.easybot.bridge.model.ServerInfo;
+import com.springwater.easybot.bridge.packet.NbtDataTypeEnum;
 import com.springwater.easybot.utils.*;
+import de.tr7zw.nbtapi.NBT;
+import de.tr7zw.nbtapi.NBTCompound;
+import de.tr7zw.nbtapi.NBTType;
+import de.tr7zw.nbtapi.iface.*;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -76,10 +87,7 @@ public class BridgeImpl implements BridgeBehavior {
         Easybot.instance.runTask(() -> {
             Player onlinePlayer = Bukkit.getPlayer(playerName);
             if (onlinePlayer != null) {
-                String message = Easybot.instance.getConfig().getString("message.bind_success", "§f[§a!§f] 绑定§f §a#account §f(§a#name§f) 成功!")
-                        .replace("&", "§")
-                        .replace("#account", accountId)
-                        .replace("#name", accountName);
+                String message = Easybot.instance.getConfig().getString("message.bind_success", "§f[§a!§f] 绑定§f §a#account §f(§a#name§f) 成功!").replace("&", "§").replace("#account", accountId).replace("#name", accountName);
                 onlinePlayer.sendMessage(message);
             }
 
@@ -89,11 +97,7 @@ public class BridgeImpl implements BridgeBehavior {
                 } else {
                     List<String> commands = Easybot.instance.getConfig().getStringList("event.bind_success");
                     for (String command : commands) {
-                        command = command
-                                .replace("&", "§")
-                                .replace("$player", playerName)
-                                .replace("$account", accountId)
-                                .replace("$name", accountName);
+                        command = command.replace("&", "§").replace("$player", playerName).replace("$account", accountId).replace("$name", accountName);
                         Easybot.getCommandApi().runCommandAsConsole(command);
                     }
                 }
@@ -150,10 +154,7 @@ public class BridgeImpl implements BridgeBehavior {
             }
 
 
-            List<String> atPlayerNames = segments.stream()
-                    .filter(x -> x instanceof AtSegment)
-                    .flatMap(seg -> Arrays.stream(((AtSegment) seg).getAtPlayerNames()))
-                    .collect(Collectors.toList());
+            List<String> atPlayerNames = segments.stream().filter(x -> x instanceof AtSegment).flatMap(seg -> Arrays.stream(((AtSegment) seg).getAtPlayerNames())).collect(Collectors.toList());
 
             Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(p -> {
                 // 判断玩家名字是否在atPlayerNames中,忽略大小写
@@ -209,11 +210,9 @@ public class BridgeImpl implements BridgeBehavior {
 
                     if (AuthMeUtils.isAuthMeInstalled()) {
                         inner.complete(AuthMeUtils.isPlayerAuthenticated(player));
-                    }
-                    else if (LibreLoginUtils.isLibreLoginInstalled()) {
+                    } else if (LibreLoginUtils.isLibreLoginInstalled()) {
                         inner.complete(LibreLoginUtils.isAuthenticated(player));
-                    }
-                    else {
+                    } else {
                         inner.complete(true);
                     }
                 } catch (Exception e) {
@@ -225,19 +224,180 @@ public class BridgeImpl implements BridgeBehavior {
     }
 
     @Override
+    public @Nullable JsonObject ReadNbtData(String playerUuid, NbtDataTypeEnum nbtDataTypeEnum) {
+        if (nbtDataTypeEnum != NbtDataTypeEnum.PlayerData) {
+            return null;
+        }
+
+        Player player = Bukkit.getPlayer(UUID.fromString(playerUuid));
+        if(player != null) {
+            // 异步任务，返回nbt
+            Future<ReadableNBT> future = CompletableFuture.supplyAsync(() -> {
+                CompletableFuture<ReadableNBT> nbtFuture = new CompletableFuture<>();
+
+                Easybot.instance.runTask(() -> NBT.get(player, nbt -> {
+                    ReadWriteNBT newNbt = NBT.createNBTObject();
+                    newNbt.mergeCompound(nbt);
+                    nbtFuture.complete(newNbt);
+                }));
+
+                try {
+                    // 等待NBT读取完成，设置超时防止卡顿
+                    return nbtFuture.get(5, TimeUnit.SECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            });
+
+            try {
+                ReadableNBT nbt = future.get(); // 等待异步任务完成
+
+                if(nbt != null) {
+                    JsonObject root = new JsonObject();
+                    convertNbtToJson(nbt, root);
+                    return root;
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        World mainWorld = null;
+        for (World world : Bukkit.getWorlds()) {
+            if (world.getEnvironment() == World.Environment.NORMAL) {
+                mainWorld = world;
+                break;
+            }
+        }
+        if (mainWorld == null) {
+            return null; // 没有主世界，无法定位玩家数据文件
+        }
+
+        File worldFolder = getWorldFolder(mainWorld);
+        if (worldFolder == null || !worldFolder.exists()) {
+            return null;
+        }
+
+        // 3. 确定玩家数据文件夹（优先匹配新版本路径 players，否则回退 playerdata）
+        File dataFile = locatePlayerDataFile(worldFolder, playerUuid);
+        if (dataFile == null) {
+            return null;
+        }
+
+        // 4. 使用 NBT-API 读取文件并转换为 JsonObject
+        try {
+            ReadWriteNBT nbt = NBT.readFile(dataFile);
+            JsonObject root = new JsonObject();
+            convertNbtToJson(nbt, root);
+            return root;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void convertNbtToJson(ReadableNBT nbtCompound, JsonObject jsonObject) {
+        for (String key : nbtCompound.getKeys()) {
+            NBTType type = nbtCompound.getType(key);
+            switch (type) {
+                case NBTTagByte:
+                    jsonObject.addProperty(key, nbtCompound.getByte(key));
+                    break;
+                case NBTTagShort:
+                    jsonObject.addProperty(key, nbtCompound.getShort(key));
+                    break;
+                case NBTTagInt:
+                    jsonObject.addProperty(key, nbtCompound.getInteger(key));
+                    break;
+                case NBTTagLong:
+                    jsonObject.addProperty(key, nbtCompound.getLong(key));
+                    break;
+                case NBTTagFloat:
+                    jsonObject.addProperty(key, nbtCompound.getFloat(key));
+                    break;
+                case NBTTagDouble:
+                    jsonObject.addProperty(key, nbtCompound.getDouble(key));
+                    break;
+                case NBTTagString:
+                    jsonObject.addProperty(key, nbtCompound.getString(key));
+                    break;
+                case NBTTagCompound:
+                    JsonObject nestedJson = new JsonObject();
+                    convertNbtToJson(Objects.requireNonNull(nbtCompound.getCompound(key)), nestedJson);
+                    jsonObject.add(key, nestedJson);
+                    break;
+                case NBTTagList:
+                    JsonArray jsonArray = new JsonArray();
+                    ReadableNBTList<ReadWriteNBT> nbtList = nbtCompound.getCompoundList(key);
+                    for (int i = 0; i < nbtList.size(); i++) {
+                        Object value = nbtList.get(i);
+                        if (value instanceof NBTCompound) {
+                            JsonObject arrayItemJson = new JsonObject();
+                            convertNbtToJson((NBTCompound) value, arrayItemJson);
+                            jsonArray.add(arrayItemJson);
+                        } else if (value instanceof String) {
+                            jsonArray.add((String) value);
+                        } else if (value instanceof Number) {
+                            jsonArray.add((Number) value);
+                        }
+                    }
+                    jsonObject.add(key, jsonArray);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private File getWorldFolder(World world) {
+        try {
+            File container = Bukkit.getWorldContainer();
+            if(container.getPath().contains(world.getName())) return container; // 哈哈,旧版本是"./world",新版本却是".",那我问我,为什么不写死,对啊!我为什么不写死啊?
+            return new File(container, world.getName());
+        } catch (NoSuchMethodError error) {
+            return new File(".", world.getName());
+        }
+    }
+    
+    private File locatePlayerDataFile(File worldFolder, String playerUuid) {
+        // 检查新版路径
+        File playersDir = new File(worldFolder, "players");
+        if (playersDir.isDirectory()) {
+            File dataDir = new File(playersDir, "data");
+            if(dataDir.isDirectory()) {
+                File file = new File(dataDir, playerUuid + ".dat");
+                if (file.isFile()) {
+                    return file;
+                }
+            }
+        }
+
+        // 检查旧版路径
+        File playerdataDir = new File(worldFolder, "playerdata");
+        if (playerdataDir.isDirectory()) {
+            File file = new File(playerdataDir, playerUuid + ".dat");
+            if (file.isFile()) {
+                return file;
+            }
+        }
+
+        return null; // 均未找到 (那很神秘了
+    }
+
+
+    @Override
     public List<PlayerInfo> getPlayerList() {
-        return Bukkit.getOnlinePlayers().stream()
-                .filter(FakePlayerUtils::isNotFake)
-                .map(x -> {
-                    PlayerInfo info = new PlayerInfo();
-                    info.setPlayerName(GeyserUtils.getNameByPlayer(x));
-                    info.setPlayerUuid(GeyserUtils.getUuid(x.getUniqueId()).toString());
-                    info.setIp(BridgeUtils.getPlayerIp(x));
-                    info.setBedrock(GeyserUtils.isBedrock(x));
-                    info.setSkinUrl(SkinUtils.getSkin(x));
-                    return info;
-                })
-                .collect(Collectors.toList());
+        return Bukkit.getOnlinePlayers().stream().filter(FakePlayerUtils::isNotFake).map(x -> {
+            PlayerInfo info = new PlayerInfo();
+            info.setPlayerName(GeyserUtils.getNameByPlayer(x));
+            info.setPlayerUuid(GeyserUtils.getUuid(x.getUniqueId()).toString());
+            info.setIp(BridgeUtils.getPlayerIp(x));
+            info.setBedrock(GeyserUtils.isBedrock(x));
+            info.setSkinUrl(SkinUtils.getSkin(x));
+            return info;
+        }).collect(Collectors.toList());
     }
 
 
@@ -247,60 +407,22 @@ public class BridgeImpl implements BridgeBehavior {
             component.setColor(ChatColor.GOLD);
             String[] atPlayerNames = ((AtSegment) segment).getAtPlayerNames();
             if (!Objects.equals(((AtSegment) segment).getAtUserId(), "0")) {
-                component.setHoverEvent(
-                        new HoverEvent(
-                                HoverEvent.Action.SHOW_TEXT,
-                                new ComponentBuilder("")
-                                        .append("@")
-                                        .append(((AtSegment) segment).getAtUserName())
-                                        .append(" (")
-                                        .append(((AtSegment) segment).getAtUserId())
-                                        .append(")")
-                                        .append(
-                                                atPlayerNames.length > 1 ?
-                                                        new TextComponent(
-                                                                "\n该玩家绑定了" + atPlayerNames.length + "个账号\n" + String.join(",", atPlayerNames)
-                                                        )
-                                                        : new TextComponent("")
-                                        )
-                                        .create()
-                        )
-                );
+                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("").append("@").append(((AtSegment) segment).getAtUserName()).append(" (").append(((AtSegment) segment).getAtUserId()).append(")").append(atPlayerNames.length > 1 ? new TextComponent("\n该玩家绑定了" + atPlayerNames.length + "个账号\n" + String.join(",", atPlayerNames)) : new TextComponent("")).create()));
             }
         } else if (segment instanceof ImageSegment) {
             component.setColor(ChatColor.GREEN);
 
             if (Easybot.instance.getConfig().getBoolean("sync.chat_image_support", true)) {
-                component.setHoverEvent(new HoverEvent(
-                        HoverEvent.Action.SHOW_TEXT,
-                        new ComponentBuilder("[[CICode,url=" + ((ImageSegment) segment).getUrl() + ",name=" + ((ImageSegment) segment).getSummary() + "]]")
-                                .create()
-                ));
+                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("[[CICode,url=" + ((ImageSegment) segment).getUrl() + ",name=" + ((ImageSegment) segment).getSummary() + "]]").create()));
             } else {
-                component.setHoverEvent(new HoverEvent(
-                        HoverEvent.Action.SHOW_TEXT,
-                        new ComponentBuilder("§7§n点击预览 ")
-                                .append(new TextComponent("§7§n" + ((ImageSegment) segment).getUrl()))
-                                .create()
-                ));
+                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("§7§n点击预览 ").append(new TextComponent("§7§n" + ((ImageSegment) segment).getUrl())).create()));
             }
 
-            component.setClickEvent(new ClickEvent(
-                    ClickEvent.Action.OPEN_URL,
-                    ((ImageSegment) segment).getUrl()
-            ));
+            component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, ((ImageSegment) segment).getUrl()));
         } else if (segment instanceof FileSegment) {
             component.setColor(ChatColor.GOLD);
-            component.setHoverEvent(new HoverEvent(
-                    HoverEvent.Action.SHOW_TEXT,
-                    new ComponentBuilder("§7§n点击下载 ")
-                            .append(new TextComponent("§7§n" + ((FileSegment) segment).getFileUrl()))
-                            .create()
-            ));
-            component.setClickEvent(new ClickEvent(
-                    ClickEvent.Action.OPEN_URL,
-                    ((FileSegment) segment).getFileUrl()
-            ));
+            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("§7§n点击下载 ").append(new TextComponent("§7§n" + ((FileSegment) segment).getFileUrl())).create()));
+            component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, ((FileSegment) segment).getFileUrl()));
 
         } else if (segment instanceof FaceSegment) {
             component.setColor(ChatColor.GREEN);

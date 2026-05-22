@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.springwater.easybot'
-version = '2.2.1'
+version = '2.3.0'
 
 repositories {
     mavenCentral()
@@ -53,6 +53,7 @@ tasks.shadowJar {
     relocate("bot.inker.acj", "com.springwater.easybot.libs.acj")
     relocate("org.javassist:javassist", "com.springwater.easybot.libs.javassist")
     relocate("org.eclipse.jetty", "com.springwater.easybot.libs.jetty")
+    relocate("de.tr7zw.nbtapi", "com.springwater.easybot.libs.nbt")
     //relocate("net.kyori", "com.springwater.easybot.libs.kyori")
 }
 
@@ -60,10 +61,11 @@ tasks.build.dependsOn(tasks.shadowJar)
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT"
-    implementation 'com.springwater.easybot:easybot-bridge:1.7.1'
+    implementation 'com.springwater.easybot:easybot-bridge:1.7.3'
     implementation 'org.javassist:javassist:3.28.0-GA'
     implementation 'bot.inker.acj:runtime:1.5'
     implementation 'org.reflections:reflections:0.10.2'
+    implementation(fileTree("libs/item-nbt-api-plugin-2.15.7.jar"))
     compileOnly(fileTree("libs"))
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
