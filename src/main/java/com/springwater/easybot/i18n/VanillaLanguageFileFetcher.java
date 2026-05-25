@@ -7,17 +7,19 @@ import org.bukkit.Bukkit;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VanillaLanguageFileFetcher {
     private static final Gson gson = new Gson();
-    
-    private static Runnable LOAD_COMPLETE = () -> {}; 
+
+    private static Runnable LOAD_COMPLETE = () -> {};
     public static void loadVanillaLanguageAsync(Runnable complete) {
         LOAD_COMPLETE = complete;
         Easybot.EXECUTOR.execute(VanillaLanguageFileFetcher::loadVanillaLanguage);
@@ -37,6 +39,7 @@ public class VanillaLanguageFileFetcher {
         String pureVersion = extractMinecraftVersion(minecraftVersion);
         if (pureVersion == null) {
             Easybot.instance.getLogger().warning("无法从服务器版本字符串中解析MC版本号: " + minecraftVersion);
+            LOAD_COMPLETE.run();
             return;
         }
         Easybot.instance.getLogger().info("解析到的纯净版本号: " + pureVersion);
@@ -47,6 +50,7 @@ public class VanillaLanguageFileFetcher {
             String versionInfoUrl = fetchVersionInfoUrl(pureVersion, versionManifestUrl);
             if (versionInfoUrl == null) {
                 Easybot.instance.getLogger().warning("未在版本清单中找到版本: " + pureVersion);
+                LOAD_COMPLETE.run();
                 return;
             }
 
@@ -54,25 +58,51 @@ public class VanillaLanguageFileFetcher {
             String assetIndexUrl = fetchAssetIndexUrl(versionInfoUrl);
             if (assetIndexUrl == null) {
                 Easybot.instance.getLogger().warning("无法获取版本 " + pureVersion + " 的资源索引地址");
+                LOAD_COMPLETE.run();
                 return;
             }
 
-            // 从资源索引中获取 zh_cn.json 的哈希值
+            // 从资源索引中获取语言文件的哈希值，优先查找 .json，回退到 .lang
             String langHash = fetchLanguageFileHash(assetIndexUrl);
+            boolean isLangFormat = false;
+
             if (langHash == null) {
-                Easybot.instance.getLogger().warning("未在资源索引中找到 minecraft/lang/zh_cn.json");
-                return;
+                // 未找到 zh_cn.json，尝试查找 zh_cn.lang
+                Easybot.instance.getLogger().info("未在资源索引中找到 minecraft/lang/zh_cn.json，尝试查找 minecraft/lang/zh_cn.lang...");
+                langHash = fetchLanguageFileHashLegacy(assetIndexUrl);
+                if (langHash == null) {
+                    Easybot.instance.getLogger().warning("未在资源索引中找到 minecraft/lang/zh_cn.lang");
+                    LOAD_COMPLETE.run();
+                    return;
+                }
+                isLangFormat = true;
             }
 
             // 构造下载地址并下载文件
             String downloadUrl = "https://bmclapi2.bangbang93.com/assets/" + langHash.substring(0, 2) + "/" + langHash;
-            downloadFile(downloadUrl, savePath);
-            Easybot.instance.getLogger().info("语言文件下载完成，保存至: " + savePath.toAbsolutePath());
+
+            if (isLangFormat) {
+                // 下载 .lang 文件到临时路径，然后转换为 JSON
+                Path tempLangPath = I18n.WORK_DIR.resolve("vanilla.lang.tmp");
+                try {
+                    downloadFile(downloadUrl, tempLangPath);
+                    Easybot.instance.getLogger().info("正在转换 lang -> json...");
+                    convertLangToJson(tempLangPath, savePath);
+                    Easybot.instance.getLogger().info("语言文件转换完成，保存至: " + savePath.toAbsolutePath());
+                } finally {
+                    // 清理临时文件
+                    Files.deleteIfExists(tempLangPath);
+                }
+            } else {
+                downloadFile(downloadUrl, savePath);
+                Easybot.instance.getLogger().info("语言文件下载完成，保存至: " + savePath.toAbsolutePath());
+            }
 
             LOAD_COMPLETE.run();
         } catch (Exception e) {
             Easybot.instance.getLogger().severe("下载语言文件时发生异常: " + e.getMessage());
             Easybot.instance.getLogger().severe(e.toString());
+            LOAD_COMPLETE.run();
         }
     }
 
@@ -125,7 +155,7 @@ public class VanillaLanguageFileFetcher {
     }
 
     /**
-     * 从资源索引文件中获取 zh_cn.json 的哈希值。
+     * 从资源索引中获取 zh_cn.json 的哈希值。
      */
     private static String fetchLanguageFileHash(String assetIndexUrl) throws IOException {
         String json = httpGet(assetIndexUrl);
@@ -140,6 +170,53 @@ public class VanillaLanguageFileFetcher {
             return (String) ((Map<?, ?>) langEntryObj).get("hash");
         }
         return null;
+    }
+
+    /**
+     * 从资源索引中获取 zh_cn.lang 的哈希值（旧版 Minecraft 格式）。
+     */
+    private static String fetchLanguageFileHashLegacy(String assetIndexUrl) throws IOException {
+        String json = httpGet(assetIndexUrl);
+        Map<?, ?> assetIndex = gson.fromJson(json, Map.class);
+        Object objectsObj = assetIndex.get("objects");
+        if (!(objectsObj instanceof Map)) {
+            return null;
+        }
+        Map<?, ?> objects = (Map<?, ?>) objectsObj;
+        Object langEntryObj = objects.get("minecraft/lang/zh_cn.lang");
+        if (langEntryObj instanceof Map) {
+            return (String) ((Map<?, ?>) langEntryObj).get("hash");
+        }
+        return null;
+    }
+
+    /**
+     * 将 Minecraft .lang 格式文件转换为 .json 格式并保存。
+     * .lang 格式: 每行一个 key=value 对，# 开头的行为注释，空行跳过。
+     * .json 格式: {"key": "value", ...}
+     */
+    private static void convertLangToJson(Path langPath, Path jsonPath) throws IOException {
+        Map<String, String> langMap = new LinkedHashMap<>();
+        try (BufferedReader reader = Files.newBufferedReader(langPath, java.nio.charset.StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // 跳过空行和注释行
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                int eqIndex = line.indexOf('=');
+                if (eqIndex > 0) {
+                    String key = line.substring(0, eqIndex);
+                    String value = line.substring(eqIndex + 1);
+                    langMap.put(key, value);
+                }
+            }
+        }
+
+        Files.createDirectories(jsonPath.getParent());
+        try (Writer writer = Files.newBufferedWriter(jsonPath, java.nio.charset.StandardCharsets.UTF_8)) {
+            gson.toJson(langMap, writer);
+        }
     }
 
     /**
@@ -161,7 +238,7 @@ public class VanillaLanguageFileFetcher {
             }
 
             try (InputStream is = conn.getInputStream();
-                 InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+                 InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
                  BufferedReader br = new BufferedReader(isr)) {
                 StringBuilder sb = new StringBuilder();
                 String line;

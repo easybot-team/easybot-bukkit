@@ -42,19 +42,30 @@ public class PlayerDeathSyncEvents implements Listener {
         if (lastDamageCause instanceof EntityDamageByEntityEvent) {
             Entity damager = ((EntityDamageByEntityEvent) lastDamageCause).getDamager();
             try {
-                Component customName = damager.customName();
-                if (customName != null) { // 这应该是命名牌?
-                    return LegacyComponentSerializer.legacySection().serializeOrNull(
-                            I18n.render(customName, Locale.CHINESE)
-                    );
+                try {
+                    Component customName = damager.customName();
+                    if (customName != null) { // 这应该是命名牌?
+                        return LegacyComponentSerializer.legacySection().serializeOrNull(
+                                I18n.render(customName, Locale.CHINESE)
+                        );
+                    }
+                } catch (NoSuchMethodError ignored) {
+                    try {
+                        @SuppressWarnings("deprecation")
+                        String legacyCustomName = damager.getCustomName();
+                        if (legacyCustomName != null) {
+                            return legacyCustomName;
+                        }
+                    } catch (NoSuchMethodError ignored2) {
+                    }
                 }
-                
+
                 Component translated = I18n.render(damager.name(), Locale.CHINESE);
                 return LegacyComponentSerializer.legacySection().serializeOrNull(translated);
-            } catch (Exception ignored) {
+            } catch (NoSuchMethodError ignored) {
             }
 
-            
+
             // ========================
             // Legacy
             // ========================
