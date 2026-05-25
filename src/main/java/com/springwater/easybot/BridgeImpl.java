@@ -6,6 +6,7 @@ import com.springwater.easybot.bridge.BridgeBehavior;
 import com.springwater.easybot.bridge.ClientProfile;
 import com.springwater.easybot.bridge.message.*;
 import com.springwater.easybot.bridge.model.PlayerInfo;
+import com.springwater.easybot.bridge.model.PlayerSkin;
 import com.springwater.easybot.bridge.model.ServerInfo;
 import com.springwater.easybot.bridge.packet.NbtDataTypeEnum;
 import com.springwater.easybot.utils.*;
@@ -398,6 +399,13 @@ public class BridgeImpl implements BridgeBehavior {
             info.setSkinUrl(SkinUtils.getSkin(x));
             return info;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public @Nullable PlayerSkin getPlayerSkin(String playerName) {
+        Player player = Bukkit.getPlayer(playerName);
+        if (player == null) return null;
+        return SkinUtils.getSkinOrNull(player);
     }
 
 
