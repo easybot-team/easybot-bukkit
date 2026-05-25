@@ -9,6 +9,8 @@ import com.springwater.easybot.command.EasyBotCommandExecutor;
 import com.springwater.easybot.command.SyncCommandExecutor;
 import com.springwater.easybot.event.*;
 import com.springwater.easybot.event.message.*;
+import com.springwater.easybot.i18n.I18n;
+import com.springwater.easybot.i18n.VanillaLanguageFileFetcher;
 import com.springwater.easybot.papi.EasyBotExpansion;
 import com.springwater.easybot.papi.OfflineStatisticExpansion;
 import com.springwater.easybot.task.TaskManager;
@@ -67,6 +69,9 @@ public final class Easybot extends JavaPlugin implements Listener {
 
         initHooks();
 
+        I18n.EnsureDirectory();
+        VanillaLanguageFileFetcher.loadVanillaLanguageAsync(I18n::LoadLanguagesAsync);
+        
         Objects.requireNonNull(Bukkit.getPluginCommand("easybot")).setExecutor(new EasyBotCommandExecutor());
         Objects.requireNonNull(Bukkit.getPluginCommand("esay")).setExecutor(new SyncCommandExecutor());
         getServer().getPluginManager().registerEvents(new PlayerEvents(), this);
@@ -204,6 +209,10 @@ public final class Easybot extends JavaPlugin implements Listener {
         bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
         bridgeClient.stop();
         putTasks();
+        
+        getLogger().info("正在重载 i18n...");
+        I18n.EnsureDirectory();
+        VanillaLanguageFileFetcher.loadVanillaLanguageAsync(I18n::LoadLanguagesAsync);
     }
 
     private void putTasks() {
