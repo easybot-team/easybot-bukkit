@@ -316,10 +316,10 @@ public class BridgeImpl implements BridgeBehavior {
                     jsonObject.addProperty(key, nbtCompound.getLong(key));
                     break;
                 case NBTTagFloat:
-                    jsonObject.addProperty(key, nbtCompound.getFloat(key));
+                    addFloatProperty(jsonObject, key, nbtCompound.getFloat(key));
                     break;
                 case NBTTagDouble:
-                    jsonObject.addProperty(key, nbtCompound.getDouble(key));
+                    addDoubleProperty(jsonObject, key, nbtCompound.getDouble(key));
                     break;
                 case NBTTagString:
                     jsonObject.addProperty(key, nbtCompound.getString(key));
@@ -341,7 +341,7 @@ public class BridgeImpl implements BridgeBehavior {
                         } else if (value instanceof String) {
                             jsonArray.add((String) value);
                         } else if (value instanceof Number) {
-                            jsonArray.add((Number) value);
+                            addNumberToArray(jsonArray, (Number) value);
                         }
                     }
                     jsonObject.add(key, jsonArray);
@@ -352,6 +352,52 @@ public class BridgeImpl implements BridgeBehavior {
         }
     }
 
+    private static void addFloatProperty(JsonObject obj, String key, float val) {
+        obj.addProperty(key, sanitizeFloat(val));
+    }
+
+    private static void addDoubleProperty(JsonObject obj, String key, double val) {
+        obj.addProperty(key, sanitizeDouble(val));
+    }
+
+    private static void addNumberToArray(JsonArray array, Number val) {
+        if (val instanceof Float) {
+            array.add(sanitizeFloat((Float) val));
+        } else if (val instanceof Double) {
+            array.add(sanitizeDouble((Double) val));
+        } else {
+            // 整数类型直接添加（Long/Integer/Short/Byte 不会出现 Infinity/NaN）
+            double d = val.doubleValue();
+            if (Double.isInfinite(d) || Double.isNaN(d)) {
+                // 理论不会走到，以防万一转成 0
+                array.add(0);
+            } else {
+                array.add(val);
+            }
+        }
+    }
+
+    /** 将 Float 特殊值替换为合法数值 */
+    private static float sanitizeFloat(float f) {
+        if (Float.isNaN(f)) {
+            return 0f;
+        }
+        if (Float.isInfinite(f)) {
+            return f > 0 ? Float.MAX_VALUE : -Float.MAX_VALUE;
+        }
+        return f;
+    }
+
+    /** 将 Double 特殊值替换为合法数值 */
+    private static double sanitizeDouble(double d) {
+        if (Double.isNaN(d)) {
+            return 0.0;
+        }
+        if (Double.isInfinite(d)) {
+            return d > 0 ? Double.MAX_VALUE : -Double.MAX_VALUE;
+        }
+        return d;
+    }
     private File getWorldFolder(World world) {
         try {
             File container = Bukkit.getWorldContainer();
