@@ -106,6 +106,27 @@ public class BridgeImpl implements BridgeBehavior {
         });
     }
 
+    /**
+     * 当收到跨平台绑定通知时调用（EasyBot 服务端主动推送）
+     * 查找对应在线玩家并发送提示消息，附带可点击的快速确认按钮
+     */
+    @Override
+    public void onCrossBindNotify(String playerName, String code, String targetPlatform, String originPlatform) {
+        Easybot.instance.runTask(() -> {
+            Player onlinePlayer = Bukkit.getPlayer(playerName);
+            if (onlinePlayer != null) {
+                onlinePlayer.sendMessage("§f你的账号正在尝试绑定 §a" + targetPlatform + " §f平台（原平台：§a" + originPlatform + "§f），\n" +
+                        "§f请在聊天框输入 §e/easybot confirm " + code + " §f确认");
+
+                TextComponent confirmBtn = new TextComponent("§a[点我快速确认]");
+                confirmBtn.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/easybot confirm " + code));
+                confirmBtn.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                        new ComponentBuilder("§7点击确认跨平台绑定").create()));
+                onlinePlayer.spigot().sendMessage(confirmBtn);
+            }
+        });
+    }
+
     @Override
     public void KickPlayer(String player, String kickMessage) {
         Easybot.instance.runTask(() -> {
