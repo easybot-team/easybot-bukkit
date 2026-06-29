@@ -10,7 +10,7 @@ public class BridgeUtils {
         playerInfoWithRaw.setName(GeyserUtils.getNameByPlayer(player));
         playerInfoWithRaw.setNameRaw(GeyserUtils.getNameRaw(player));
         playerInfoWithRaw.setUuid(GeyserUtils.getUuid(player.getUniqueId()).toString());
-        playerInfoWithRaw.setIp("");
+        playerInfoWithRaw.setIp(getPlayerIp(player));
         return playerInfoWithRaw;
     }
 
