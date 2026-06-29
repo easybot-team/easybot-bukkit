@@ -224,6 +224,13 @@ public class BridgeImpl implements BridgeBehavior {
             CompletableFuture<Boolean> inner = new CompletableFuture<>();
             Easybot.instance.runTask(() -> {
                 try {
+                    if(AuthMeUtils.isAuthMeInstalled()) {
+                        if (AuthMeUtils.isAsyncPlayerConnectionConfigureEventSupported() && AuthMeUtils.isPreJoinDialogEnabled()) {
+                            inner.complete(!AuthMeUtils.isPlayerInPreJoinDialog(name));
+                            return;
+                        }
+                    }
+                    
                     Player player = Bukkit.getPlayer(name);
                     if (player == null) {
                         inner.complete(true); // true表示不需要登录
@@ -252,7 +259,7 @@ public class BridgeImpl implements BridgeBehavior {
         }
 
         Player player = Bukkit.getPlayer(UUID.fromString(playerUuid));
-        if(player != null) {
+        if (player != null) {
             // 异步任务，返回nbt
             Future<ReadableNBT> future = CompletableFuture.supplyAsync(() -> {
                 CompletableFuture<ReadableNBT> nbtFuture = new CompletableFuture<>();
@@ -275,7 +282,7 @@ public class BridgeImpl implements BridgeBehavior {
             try {
                 ReadableNBT nbt = future.get(); // 等待异步任务完成
 
-                if(nbt != null) {
+                if (nbt != null) {
                     JsonObject root = new JsonObject();
                     convertNbtToJson(nbt, root);
                     return root;
@@ -398,7 +405,9 @@ public class BridgeImpl implements BridgeBehavior {
         }
     }
 
-    /** 将 Float 特殊值替换为合法数值 */
+    /**
+     * 将 Float 特殊值替换为合法数值
+     */
     private static float sanitizeFloat(float f) {
         if (Float.isNaN(f)) {
             return 0f;
@@ -409,7 +418,9 @@ public class BridgeImpl implements BridgeBehavior {
         return f;
     }
 
-    /** 将 Double 特殊值替换为合法数值 */
+    /**
+     * 将 Double 特殊值替换为合法数值
+     */
     private static double sanitizeDouble(double d) {
         if (Double.isNaN(d)) {
             return 0.0;
@@ -419,22 +430,23 @@ public class BridgeImpl implements BridgeBehavior {
         }
         return d;
     }
+
     private File getWorldFolder(World world) {
         try {
             File container = Bukkit.getWorldContainer();
-            if(container.getPath().contains(world.getName())) return container; // 哈哈,旧版本是"./world",新版本却是".",那我问我,为什么不写死,对啊!我为什么不写死啊?
+            if (container.getPath().contains(world.getName())) return container; // 哈哈,旧版本是"./world",新版本却是".",那我问我,为什么不写死,对啊!我为什么不写死啊?
             return new File(container, world.getName());
         } catch (NoSuchMethodError error) {
             return new File(".", world.getName());
         }
     }
-    
+
     private File locatePlayerDataFile(File worldFolder, String playerUuid) {
         // 检查新版路径
         File playersDir = new File(worldFolder, "players");
         if (playersDir.isDirectory()) {
             File dataDir = new File(playersDir, "data");
-            if(dataDir.isDirectory()) {
+            if (dataDir.isDirectory()) {
                 File file = new File(dataDir, playerUuid + ".dat");
                 if (file.isFile()) {
                     return file;

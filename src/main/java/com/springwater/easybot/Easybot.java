@@ -8,6 +8,7 @@ import com.springwater.easybot.bridge.ClientProfile;
 import com.springwater.easybot.command.EasyBotCommandExecutor;
 import com.springwater.easybot.command.SyncCommandExecutor;
 import com.springwater.easybot.event.*;
+import com.springwater.easybot.event.authme.AuthMePreLoginDialogEvents;
 import com.springwater.easybot.event.message.*;
 import com.springwater.easybot.i18n.I18n;
 import com.springwater.easybot.i18n.VanillaLanguageFileFetcher;
@@ -71,7 +72,7 @@ public final class Easybot extends JavaPlugin implements Listener {
 
         I18n.EnsureDirectory();
         VanillaLanguageFileFetcher.loadVanillaLanguageAsync(I18n::LoadLanguagesAsync);
-        
+
         Objects.requireNonNull(Bukkit.getPluginCommand("easybot")).setExecutor(new EasyBotCommandExecutor());
         Objects.requireNonNull(Bukkit.getPluginCommand("esay")).setExecutor(new SyncCommandExecutor());
         getServer().getPluginManager().registerEvents(new PlayerEvents(), this);
@@ -95,6 +96,17 @@ public final class Easybot extends JavaPlugin implements Listener {
     private void handleAuthMeCompatibility() {
         if (AuthMeUtils.init()) {
             getLogger().info("\u001B[32m※ 检测到AuthMe,群聊登录可以正常使用！\u001B[0m");
+            if (!AuthMeUtils.isPreJoinDialogEnabled()) {
+                return;
+            }
+
+            if (!AuthMeUtils.isAsyncPlayerConnectionConfigureEventSupported()) {
+                getLogger().info("\u001B[31m※ 您已启用AuthMe预登陆菜单功能,但当前服务端不存在AsyncPlayerConnectionConfigureEvent (仅支持Paper服务端)\u001B[0m");
+                return;
+            }
+
+            getLogger().info("\u001B[32m※ 检测到AuthMe预登录对话框功能已启用！\u001B[0m");
+            getServer().getPluginManager().registerEvents(new AuthMePreLoginDialogEvents(), this);
         } else {
             //getLogger().info("\u001B[31m※ 未检测到AuthMe,群聊登录功能可能无法正常工作！\u001B[0m");
         }
@@ -143,6 +155,7 @@ public final class Easybot extends JavaPlugin implements Listener {
             getLogger().info("\u001B[32m※ 您的服务端不支持消息同步高级API! 消息同步将以旧版本格式展示!\u001B[0m");
         }
     }
+
 
     private void handleGeyserCompatibility() {
         ClientProfile.setHasGeyser(BukkitUtils.hasGeyserMc());
@@ -209,7 +222,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         bridgeClient.resetUrl(getConfig().getString("service.url", "ws://127.0.0.1:8080/bridge"));
         bridgeClient.stop();
         putTasks();
-        
+
         getLogger().info("正在重载 i18n...");
         I18n.EnsureDirectory();
         VanillaLanguageFileFetcher.loadVanillaLanguageAsync(I18n::LoadLanguagesAsync);
