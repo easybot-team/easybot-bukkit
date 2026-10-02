@@ -18,6 +18,9 @@ commands:
     permission: easybot.command.esay
 
 permissions:
+  easybot.command.config:
+    description: 查看及修改播报冷却配置
+    default: op
   easybot.command:
     description: EasyBot命令基本权限
     default: true

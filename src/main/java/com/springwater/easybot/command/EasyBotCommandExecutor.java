@@ -27,6 +27,7 @@ public class EasyBotCommandExecutor implements TabExecutor {
             sender.sendMessage("§f[§a!§f] §a请输入/easybot bind §f绑定你的账号");
             return true;
         }
+        if (args[0].equalsIgnoreCase("config")) return CooldownConfigCommand.execute(sender, args);
         FileConfiguration config = Easybot.instance.getConfig();
         if(args[0].equalsIgnoreCase("reload")){
             if(!sender.isOp()){
@@ -212,7 +213,19 @@ public class EasyBotCommandExecutor implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] strings) {
         if (strings.length == 1) {
-            return commandSender.isOp() ? Arrays.asList("bind", "confirm", "status", "reload") : Arrays.asList("bind", "confirm", "status");
+            List<String> options = new ArrayList<>(Arrays.asList("bind", "confirm", "status"));
+            if (commandSender.isOp()) options.add("reload");
+            if (commandSender.hasPermission("easybot.command.config")) options.add("config");
+            options.removeIf(option -> !option.startsWith(strings[0].toLowerCase(Locale.ROOT)));
+            return options;
+        }
+        if (strings.length >= 2 && strings[0].equalsIgnoreCase("config")) {
+            if (!commandSender.hasPermission("easybot.command.config")) return Collections.emptyList();
+            List<String> options = new ArrayList<>();
+            if (strings.length == 2) options.addAll(CooldownConfigCommand.KEYS);
+            if (strings.length == 3 && CooldownConfigCommand.KEYS.contains(strings[1])) options.addAll(Arrays.asList("0", "30", "60"));
+            options.removeIf(option -> !option.startsWith(strings[strings.length - 1]));
+            return options;
         }
         if (strings.length == 2 && strings[0].equalsIgnoreCase("bind")) {
             return Collections.singletonList("confirm");
