@@ -5,6 +5,7 @@ import com.springwater.easybot.bridge.packet.PlayerInfoWithRaw;
 import com.springwater.easybot.i18n.I18n;
 import com.springwater.easybot.utils.BridgeUtils;
 import com.springwater.easybot.utils.FakePlayerUtils;
+import com.springwater.easybot.utils.SyncCooldown;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.translation.GlobalTranslator;
@@ -26,6 +27,7 @@ import java.util.Locale;
 public class PlayerDeathSyncEvents implements Listener {
 
     private final boolean hasModernMessageApi;
+    private final SyncCooldown deathCooldown = new SyncCooldown();
 
     public PlayerDeathSyncEvents() {
         boolean modernMessageApi = false;
@@ -92,6 +94,11 @@ public class PlayerDeathSyncEvents implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (Easybot.instance.getConfig().getBoolean("skip_options.skip_death")) return;
         if (FakePlayerUtils.isFake(event.getEntity())) return;
+        if (Easybot.getClient() == null || !Easybot.getClient().isReady()) return;
+        EntityDamageEvent damage = event.getEntity().getLastDamageCause();
+        String cause = damage == null ? "UNKNOWN" : damage.getCause().name();
+        if (!deathCooldown.allow(event.getEntity().getUniqueId() + ":" + cause,
+                Easybot.instance.getConfig().getInt("sync.death_cooldown_seconds"))) return;
         PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(event.getEntity());
         String deathMessage = null;
 
