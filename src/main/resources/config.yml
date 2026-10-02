@@ -15,6 +15,26 @@ service:
 command:
   # 允许在此服务器进行绑定
   allow_bind: true
+  # 关闭命令后，执行与补全均受限制；关闭 bind 同时阻止 confirm。
+  enabled:
+    help: true
+    bind: true
+    confirm: true
+    status: true
+    reload: true
+    esay: true
+
+# 仅过滤转发，不影响游戏内聊天。长度 0 表示不限，空列表表示不过滤。
+chat_filter:
+  game_to_group:
+    max_length: 0
+    blocked_keywords: []
+    blocked_player_names: []
+    blocked_player_uuids: []
+  # 按主程序传来的显示文本检查，可能包含昵称、模板前缀。
+  group_to_game:
+    max_length: 0
+    blocked_keywords: []
 
 # 消息设置
 message:

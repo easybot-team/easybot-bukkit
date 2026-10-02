@@ -27,3 +27,6 @@ permissions:
   easybot.command.esay:
     description: 消息同步权限
     default: true
+  easybot.command.reload:
+    description: 重载 EasyBot 配置
+    default: op

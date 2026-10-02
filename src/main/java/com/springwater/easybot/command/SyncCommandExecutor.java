@@ -16,6 +16,29 @@ public class SyncCommandExecutor implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String message = args != null ? String.join(" ", args) : "";
+        if (!CommandPermissions.canUse(sender, "esay")) {
+            sender.sendMessage("§c此命令已禁用或没有权限");
+            return true;
+        }
+        if (message.trim().isEmpty()) {
+            sender.sendMessage("§c用法: /esay <消息>");
+            return true;
+        }
+        if (Easybot.getClient() == null || !Easybot.getClient().isReady()) {
+            sender.sendMessage("§c当前服务器未连接主程序");
+            return true;
+        }
+        PlayerInfoWithRaw playerInfo = new PlayerInfoWithRaw();
+        playerInfo.setIp("localhost");
+        playerInfo.setName("CONSOLE");
+        playerInfo.setNameRaw("CONSOLE");
+        playerInfo.setUuid("");
+        if (sender instanceof Player) playerInfo = BridgeUtils.buildPlayerInfoFull((Player) sender);
+        String rejection = com.springwater.easybot.utils.ChatFilterUtils.outgoingRejection(playerInfo, message);
+        if (rejection != null) {
+            sender.sendMessage("§c未转发: " + rejection);
+            return true;
+        }
         if (ClientProfile.getSyncMessageMoney() > 0 && sender instanceof Player) {
             Player player = (Player) sender;
             if (Bukkit.getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -27,16 +50,6 @@ public class SyncCommandExecutor implements CommandExecutor {
                 player.sendMessage("你没有足够的金钱!");
                 return true;
             }
-        }
-
-        PlayerInfoWithRaw playerInfo = new PlayerInfoWithRaw();
-        playerInfo.setIp("localhost");
-        playerInfo.setName("CONSOLE");
-        playerInfo.setNameRaw("CONSOLE");
-        playerInfo.setUuid("");
-
-        if(sender instanceof Player){
-            playerInfo = BridgeUtils.buildPlayerInfoFull((Player)sender);
         }
 
         PlayerInfoWithRaw finalPlayerInfo = playerInfo;
