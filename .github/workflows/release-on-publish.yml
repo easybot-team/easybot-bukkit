@@ -15,6 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Use official Gradle distribution in CI
+        run: sed -i 's#mirrors\.cloud\.tencent\.com/gradle/#services.gradle.org/distributions/#' gradle/wrapper/gradle-wrapper.properties
+
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
