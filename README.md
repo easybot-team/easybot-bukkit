@@ -218,7 +218,7 @@ src/main/java/com/springwater/easybot/
 > 遇到 Bug 或想提功能建议，请到 **[easybot-issues](https://github.com/easybot-team/easybot-issues/issues/new/choose)** 提交（官方统一收集各端问题）。
 > 附上服务端版本、插件版本，并把 `config.yml` 里的 `debug` 设为 `true` 后复现一次、附上后台日志，定位会快很多。
 
-- 使用文档：<https://docs.hualib.com/>
+- 使用文档：<https://docs.inectar.cn/>
 - 上游仓库：<https://github.com/easybot-team/easybot-bukkit>
 - 问题反馈：[easybot-team/easybot-issues](https://github.com/easybot-team/easybot-issues/issues)
 - Logo 素材：取自同组织的 [easybot-mod](https://github.com/easybot-team/easybot-mod) 模组图标（`docs/logo.png`）
@@ -228,4 +228,4 @@ src/main/java/com/springwater/easybot/
 
 ---
 
-<p align="center"><sub>EasyBot-Bukkit · 使用文档 <a href="https://docs.hualib.com/">docs.hualib.com</a> · 问题反馈 <a href="https://github.com/easybot-team/easybot-issues/issues">easybot-issues</a> · 由 <a href="https://github.com/easybot-team">easybot-team</a> 维护</sub></p>
+<p align="center"><sub>EasyBot-Bukkit · 使用文档 <a href="https://docs.inectar.cn/">docs.inectar.cn</a> · 问题反馈 <a href="https://github.com/easybot-team/easybot-issues/issues">easybot-issues</a> · 由 <a href="https://github.com/easybot-team">easybot-team</a> 维护</sub></p>
