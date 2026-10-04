@@ -122,7 +122,11 @@ public class BridgeImpl implements BridgeBehavior {
                 confirmBtn.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/easybot confirm " + code));
                 confirmBtn.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                         new ComponentBuilder("§7点击确认跨平台绑定").create()));
-                onlinePlayer.spigot().sendMessage(confirmBtn);
+                try {
+                    onlinePlayer.spigot().sendMessage(confirmBtn);
+                } catch (Throwable ignored) {
+                    onlinePlayer.sendMessage("§a[点我快速确认] §7请输入 /easybot confirm " + code);
+                }
             }
         });
     }
@@ -132,6 +136,8 @@ public class BridgeImpl implements BridgeBehavior {
         Easybot.instance.runTask(() -> {
             Player kickPlayer = Bukkit.getPlayer(player);
             if (kickPlayer != null) {
+                // Paper 1.19.3+ 推荐 kick(Component)，旧服务端回退 kickPlayer(String)
+                if (CompatUtils.kickPlayer(kickPlayer, kickMessage)) return;
                 kickPlayer.kickPlayer(kickMessage);
             }
         });
@@ -192,17 +198,17 @@ public class BridgeImpl implements BridgeBehavior {
                 try {
                     try {
                         p.spigot().sendMessage(builder.create());
-                    } catch (Exception ignored) {
+                    } catch (Throwable ignored) {
                         p.sendMessage(builder.create());
                     }
-                } catch (Exception ex) {
-                    logger.warning(ex.getMessage());
+                } catch (Throwable ex) {
+                    logger.warning(String.valueOf(ex.getMessage()));
                     logger.warning("将群内消息转换为Minecraft格式消息时遇到错误,将向玩家发送原始信息!");
                     Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
                 }
             }));
-        } catch (Exception ex) {
-            logger.warning(ex.getMessage());
+        } catch (Throwable ex) {
+            logger.warning(String.valueOf(ex.getMessage()));
             logger.warning("将群内消息转换为Minecraft格式消息时遇到错误,将向玩家发送原始信息!");
             Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
         }
@@ -435,34 +441,46 @@ public class BridgeImpl implements BridgeBehavior {
         try {
             File container = Bukkit.getWorldContainer();
             if (container.getPath().contains(world.getName())) return container; // 哈哈,旧版本是"./world",新版本却是".",那我问我,为什么不写死,对啊!我为什么不写死啊?
-            return new File(container, world.getName());
+            File levelDir = new File(container, world.getName());
+            if (levelDir.isDirectory()) return levelDir;
+            // 26.1+ 世界改为按 key 存放, 目录名不再一定等于 World#getName, 直接用容器目录兜底
+            return container;
         } catch (NoSuchMethodError error) {
             return new File(".", world.getName());
         }
     }
 
     private File locatePlayerDataFile(File worldFolder, String playerUuid) {
-        // 检查新版路径
-        File playersDir = new File(worldFolder, "players");
-        if (playersDir.isDirectory()) {
-            File dataDir = new File(playersDir, "data");
-            if (dataDir.isDirectory()) {
-                File file = new File(dataDir, playerUuid + ".dat");
-                if (file.isFile()) {
-                    return file;
-                }
-            }
+        String fileName = playerUuid + ".dat";
+
+        // 常见固定路径（新→旧）
+        String[] knownRelativeDirs = {
+                "players/data", // 26.x
+                "playerdata",   // ≤ 1.21
+                "players"
+        };
+        for (String relative : knownRelativeDirs) {
+            File file = new File(new File(worldFolder, relative), fileName);
+            if (file.isFile()) return file;
         }
 
-        // 检查旧版路径
-        File playerdataDir = new File(worldFolder, "playerdata");
-        if (playerdataDir.isDirectory()) {
-            File file = new File(playerdataDir, playerUuid + ".dat");
-            if (file.isFile()) {
-                return file;
+        // 26.1+ 世界目录变成 <level>/dimensions/<namespace>/<key>/, 上面几种写法都定位不到,
+        // 这里再做一次有限深度的搜索, 以后目录结构再变也不用改代码
+        return findFileRecursively(worldFolder, fileName, 0, 4);
+    }
+
+    private File findFileRecursively(File dir, String fileName, int depth, int maxDepth) {
+        if (dir == null || depth > maxDepth) return null;
+        File[] children = dir.listFiles();
+        if (children == null) return null;
+        for (File child : children) {
+            if (child.isDirectory()) {
+                File found = findFileRecursively(child, fileName, depth + 1, maxDepth);
+                if (found != null) return found;
+            } else if (child.getName().equals(fileName)) {
+                return child;
             }
         }
-
         return null; // 均未找到 (那很神秘了
     }
 

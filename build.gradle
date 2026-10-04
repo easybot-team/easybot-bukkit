@@ -69,6 +69,10 @@ dependencies {
     compileOnly(fileTree("libs"))
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
+    // 注意: adventure 5.x / jspecify 的 jar 放在 libs 里(compileOnly fileTree), 不用 Maven 坐标。
+    // 原因: Paper 26.3 的 API 用到了 adventure 5.2 与 jspecify 的类型(如 PlayerHeadObjectContents/@NullMarked),
+    // 而 adventure-api:5.2.0 声明的是 Java 21 变体, 与项目的 Java 8 目标在 Gradle 变体匹配上冲突。
+    // 下面这份 4.17 是"打包进插件"的兜底副本: 插件类加载父优先, 服务端有 adventure 时用的是服务端那套。
     compileOnly("net.kyori:adventure-api:4.17.0")
     compileOnly("org.geysermc.api:base-api:1.0.1")
     compileOnly("org.geysermc.floodgate:api:2.1.1-SNAPSHOT")

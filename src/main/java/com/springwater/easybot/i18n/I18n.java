@@ -38,10 +38,19 @@ public class I18n {
     }
 
     public static String convertMinecraftToMessageFormat(String minecraftFormat) {
+        // Minecraft 语言文件里的 { } ' 都是普通字面量，但它们同时是 MessageFormat 的语法字符。
+        // 直接透传会抛出 "Unmatched braces in the pattern."
+        // （例如 26.3 的 vanilla.json 中有 "key.keyboard.keypad.left.brace": "小键盘 {"），
+        // 单个条目异常会导致整个语言文件加载失败，所以先按 MessageFormat 规则转义，再替换占位符。
+        String source = minecraftFormat
+                .replace("'", "''")
+                .replace("{", "'{'")
+                .replace("}", "'}'");
+
         // 匹配 %[argument_index$][flags][width][.precision]conversion
         // 这里我们只关心最常见的 %s 和 %d，并支持可选的 n$
         Pattern pattern = Pattern.compile("%(?:(\\d+)\\$)?([ds])");
-        Matcher matcher = pattern.matcher(minecraftFormat);
+        Matcher matcher = pattern.matcher(source);
         StringBuffer sb = new StringBuffer();
 
         // 用于处理不带索引的连续占位符（如多个 %s）
@@ -101,18 +110,28 @@ public class I18n {
             try (Reader reader = new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8)) {
                 Map<String, String> translations = GSON.fromJson(reader, mapType);
                 if (translations != null && !translations.isEmpty()) {
+                    int loaded = 0;
+                    int skipped = 0;
                     for (Map.Entry<String, String> entry : translations.entrySet()) {
-                        TRANSLATOR.getRegistry().register(
-                                entry.getKey(),
-                                Locale.CHINESE,
-                                new MessageFormat(
-                                        convertMinecraftToMessageFormat(entry.getValue()),
-                                        Locale.CHINESE
-                                )
-                        );
+                        try {
+                            TRANSLATOR.register(
+                                    entry.getKey(),
+                                    Locale.CHINESE,
+                                    new MessageFormat(
+                                            convertMinecraftToMessageFormat(entry.getValue()),
+                                            Locale.CHINESE
+                                    )
+                            );
+                            loaded++;
+                        } catch (Exception ex) {
+                            // 单条翻译格式异常不应导致整个语言文件加载失败
+                            skipped++;
+                        }
                     }
                     Easybot.instance.getLogger()
-                            .info("已加载语言文件: " + fileName + " (" + translations.size() + " 条) 命名空间: (" + namespace + ")");
+                            .info("已加载语言文件: " + fileName + " (" + loaded + " 条"
+                                    + (skipped > 0 ? "，跳过 " + skipped + " 条异常" : "")
+                                    + ") 命名空间: (" + namespace + ")");
                 }
             } catch (Exception e) {
                 Easybot.instance.getLogger()
