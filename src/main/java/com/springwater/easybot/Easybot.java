@@ -27,10 +27,47 @@ import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import com.springwater.easybot.utils.ChatFilterUtils;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class Easybot extends JavaPlugin implements Listener {
+    private volatile FileConfiguration activeConfig;
+
+    @Override
+    public FileConfiguration getConfig() {
+        if (activeConfig == null) reloadConfig();
+        return activeConfig;
+    }
+
+    @Override
+    public void reloadConfig() {
+        YamlConfiguration candidate = new YamlConfiguration();
+        try {
+            candidate.load(new File(getDataFolder(), "config.yml"));
+            try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")), StandardCharsets.UTF_8)) {
+                candidate.setDefaults(YamlConfiguration.loadConfiguration(reader));
+            }
+            ChatFilterUtils.validateConfig(candidate);
+            activeConfig = candidate;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("配置加载失败，保留上一个有效配置: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void saveConfig() {
+        try {
+            getConfig().save(new File(getDataFolder(), "config.yml"));
+        } catch (java.io.IOException e) {
+            getLogger().severe("配置保存失败: " + e.getMessage());
+        }
+    }
     public static Easybot instance;
     //private static HookerManager eventHooks;
 
@@ -212,8 +249,13 @@ public final class Easybot extends JavaPlugin implements Listener {
         }
     }
 
-    public void reload() {
-        reloadConfig();
+    public boolean reload() {
+        try {
+            reloadConfig();
+        } catch (IllegalArgumentException e) {
+            getLogger().warning(e.getMessage());
+            return false;
+        }
         ClientProfile.setPluginVersion(getDescription().getVersion());
         ClientProfile.setServerDescription(BukkitUtils.tryGetServerDescription());
         ClientProfile.setDebugMode(getConfig().getBoolean("debug", false));
@@ -226,6 +268,7 @@ public final class Easybot extends JavaPlugin implements Listener {
         getLogger().info("正在重载 i18n...");
         I18n.EnsureDirectory();
         VanillaLanguageFileFetcher.loadVanillaLanguageAsync(I18n::LoadLanguagesAsync);
+        return true;
     }
 
     private void putTasks() {

@@ -3,6 +3,7 @@ package com.springwater.easybot.event.message;
 import com.springwater.easybot.Easybot;
 import com.springwater.easybot.bridge.packet.PlayerInfoWithRaw;
 import com.springwater.easybot.utils.BridgeUtils;
+import com.springwater.easybot.utils.ChatFilterUtils;
 import com.springwater.easybot.utils.FakePlayerUtils;
 import dev.unnm3d.redischat.api.events.AsyncRedisChatMessageEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -12,7 +13,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 public class RedisChatMessageSyncEvents implements Listener {
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public static void syncMessage(AsyncRedisChatMessageEvent event){
         if(Easybot.instance.getConfig().getBoolean("skip_options.skip_chat")) return;
         if(!event.isCancelled()){
@@ -20,8 +21,9 @@ public class RedisChatMessageSyncEvents implements Listener {
                 Player player = (Player) event.getSender();
                 if(FakePlayerUtils.isFake(player)) return;
                 PlayerInfoWithRaw playerInfo = BridgeUtils.buildPlayerInfoFull(player);
-                String message = PlainTextComponentSerializer.plainText().serialize(event.getContent());
-                Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncMessage(playerInfo, message, false));
+                String outgoing = PlainTextComponentSerializer.plainText().serialize(event.getContent());
+                if (ChatFilterUtils.outgoingRejection(playerInfo, outgoing) != null) return;
+                Easybot.EXECUTOR.execute(() -> Easybot.getClient().syncMessage(playerInfo, outgoing, false));
             }
         }
     }

@@ -79,6 +79,7 @@ public class BridgeImpl implements BridgeBehavior {
 
     @Override
     public void SyncToChat(String message) {
+        if (com.springwater.easybot.utils.ChatFilterUtils.blocksIncoming(message, null)) return;
         logger.info(message);
         Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(message)));
     }
@@ -145,6 +146,7 @@ public class BridgeImpl implements BridgeBehavior {
 
     @Override
     public void SyncToChatExtra(List<Segment> segments, String text) {
+        if (com.springwater.easybot.utils.ChatFilterUtils.blocksIncoming(text, segments)) return;
         if (!ChatCompatUtil.hasAppendMethod()) {
             Easybot.instance.runTask(() -> Bukkit.getOnlinePlayers().forEach(x -> x.sendMessage(text)));
             return;
