@@ -18,6 +18,8 @@ public class CommandPermissions {
                 return sender.hasPermission("easybot.command.bind");
             case "reload":
                 return sender.hasPermission("easybot.command.reload");
+            case "config":
+                return sender.hasPermission("easybot.command.config");
             case "esay":
                 return sender.hasPermission("easybot.command.esay");
             case "help":

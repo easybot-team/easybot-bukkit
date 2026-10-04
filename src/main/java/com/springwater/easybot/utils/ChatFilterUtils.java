@@ -39,7 +39,7 @@ public class ChatFilterUtils {
         }
         ConfigurationSection enabled = config.getConfigurationSection("command.enabled");
         if (enabled != null) for (String key : enabled.getKeys(false)) {
-            if (!Arrays.asList("help", "bind", "confirm", "status", "reload", "esay").contains(key) || !enabled.isBoolean(key))
+            if (!Arrays.asList("help", "bind", "confirm", "status", "reload", "config", "esay").contains(key) || !enabled.isBoolean(key))
                 throw new IllegalArgumentException("无效的命令开关: " + key);
         }
     }

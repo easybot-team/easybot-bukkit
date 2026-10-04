@@ -26,6 +26,7 @@ public class EasyBotCommandExecutor implements TabExecutor {
             sendHelp(sender);
             return true;
         }
+        if (args[0].equalsIgnoreCase("config")) return CooldownConfigCommand.execute(sender, args);
         FileConfiguration config = Easybot.instance.getConfig();
         String action = args[0].toLowerCase(Locale.ROOT);
         if (Arrays.asList("bind", "confirm", "status", "reload", "help").contains(action)
@@ -219,16 +220,25 @@ public class EasyBotCommandExecutor implements TabExecutor {
             if (CommandPermissions.canUse(sender, name)) sender.sendMessage("§a/easybot " + name + (name.equals("confirm") ? " <code>" : ""));
         }
         if (CommandPermissions.canUse(sender, "esay")) sender.sendMessage("§a/esay <消息>");
+        if (CommandPermissions.canUse(sender, "config")) sender.sendMessage("§a/easybot config <配置项> [秒数]");
     }
 
     @Override
     public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] strings) {
         if (strings.length == 1) {
             List<String> result = new ArrayList<>();
-            for (String name : Arrays.asList("help", "bind", "confirm", "status", "reload")) {
+            for (String name : Arrays.asList("help", "bind", "confirm", "status", "reload", "config")) {
                 if (CommandPermissions.canUse(commandSender, name) && name.startsWith(strings[0].toLowerCase(Locale.ROOT))) result.add(name);
             }
             return result;
+        }
+        if (strings.length >= 2 && strings[0].equalsIgnoreCase("config")) {
+            if (!CommandPermissions.canUse(commandSender, "config")) return Collections.emptyList();
+            List<String> options = new ArrayList<>();
+            if (strings.length == 2) options.addAll(CooldownConfigCommand.KEYS);
+            if (strings.length == 3 && CooldownConfigCommand.KEYS.contains(strings[1])) options.addAll(Arrays.asList("0", "30", "60"));
+            options.removeIf(option -> !option.startsWith(strings[strings.length - 1]));
+            return options;
         }
         if (strings.length == 2 && strings[0].equalsIgnoreCase("bind") && CommandPermissions.canUse(commandSender, "bind") && "confirm".startsWith(strings[1].toLowerCase(Locale.ROOT))) {
             return Collections.singletonList("confirm");

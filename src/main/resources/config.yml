@@ -22,6 +22,7 @@ command:
     confirm: true
     status: true
     reload: true
+    config: true
     esay: true
 
 # 仅过滤转发，不影响游戏内聊天。长度 0 表示不限，空列表表示不过滤。
@@ -112,3 +113,13 @@ geyser:
 sync:
   # 消息同步图片时支持ChatImage
   chat_image_support: true
+  # 播报冷却，单位：秒；0 或负数关闭。旧配置缺省为 0。
+  # 进服、退服按玩家 UUID 分别计时；死亡按 UUID + Bukkit 伤害原因计时。
+  # 首次正常发送，重复事件不延长冷却；切换死因不影响原死因的冷却。
+  # 冷却期间只跳过发往主程序的对应播报，不取消游戏事件或改变登录验证。
+  # 修改某项时长后重载，该类事件下次发生时清空原冷却；重启后重新计时。
+  # /easybot config 查看；/easybot config sync.join_cooldown_seconds 60 设置并保存，即时生效
+  # 同样支持 sync.quit_cooldown_seconds 和 sync.death_cooldown_seconds，需 easybot.command.config 权限
+  join_cooldown_seconds: 0
+  quit_cooldown_seconds: 0
+  death_cooldown_seconds: 0

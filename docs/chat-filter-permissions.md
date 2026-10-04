@@ -33,6 +33,7 @@ command:
     confirm: true
     status: true
     reload: true
+    config: true
     esay: true
 ```
 
@@ -43,6 +44,7 @@ command:
 | `/easybot confirm <code>` | 同上 | 所有人 |
 | `/easybot status`（绑定状态） | 同上 | 所有人 |
 | `/easybot reload` | `easybot.command` 和 `easybot.command.reload` | OP |
+| `/easybot config <配置项> [秒数]` | `easybot.command` 和 `easybot.command.config` | OP |
 | `/esay <消息>` | `easybot.command.esay` | 所有人 |
 
 沿用 Bukkit 权限系统，可用现有权限插件授予或拒绝节点。重载权限不再硬编码为 OP。关闭 `allow_bind` 或禁用 `bind` 同时阻止确认绑定；`status` 可独立保留。帮助及补全只列出已开启且有权限的命令。禁用 `reload` 后需修改文件并重启插件/服务器恢复，建议保留此管理入口。
