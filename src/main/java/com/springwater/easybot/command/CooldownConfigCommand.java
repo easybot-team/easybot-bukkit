@@ -1,6 +1,7 @@
 package com.springwater.easybot.command;
 
 import com.springwater.easybot.Easybot;
+import com.springwater.easybot.utils.ChatFilterUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -14,8 +15,8 @@ final class CooldownConfigCommand {
             "sync.quit_cooldown_seconds", "sync.death_cooldown_seconds");
 
     static synchronized boolean execute(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("easybot.command.config")) {
-            sender.sendMessage("§c你没有权限执行此命令");
+        if (!CommandPermissions.canUse(sender, "config")) {
+            sender.sendMessage("§c此命令已禁用或没有权限");
             return true;
         }
         if (args.length == 1) {
@@ -45,6 +46,7 @@ final class CooldownConfigCommand {
             YamlConfiguration saved = new YamlConfiguration();
             saved.load(file.toFile());
             saved.set(args[1], seconds);
+            ChatFilterUtils.validateConfig(saved);
             temporary = Files.createTempFile(file.getParent(), "easybot-config-", ".tmp");
             saved.save(temporary.toFile());
             try {

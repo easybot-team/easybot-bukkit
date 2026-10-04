@@ -29,7 +29,8 @@ public class SkinUtils {
                 return "https://textures.minecraft.net/" + skin.getPath();
             }
             return "https://mc-heads.net/skin/" + player.getUniqueId();
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
+            // 注意: 25+ 上 PlayerProfile/PlayerTextures 都在变, 这里要连 Error 一起吃掉(NoSuchMethodError)
             return "";
         }
     }
@@ -60,7 +61,7 @@ public class SkinUtils {
                 }
                 return skinWithPaperSkinApi;
             }
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             Easybot.instance.getLogger().severe("处理玩家皮肤信息遇到异常! " + ex);
         }
         return null;

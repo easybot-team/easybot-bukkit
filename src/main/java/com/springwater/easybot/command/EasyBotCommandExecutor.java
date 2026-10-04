@@ -23,19 +23,20 @@ public class EasyBotCommandExecutor implements TabExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args == null || args.length == 0) {
-            if (!sender.hasPermission("easybot.command.bind")) return false;
-            sender.sendMessage("§f[§a!§f] §a请输入/easybot bind §f绑定你的账号");
+            sendHelp(sender);
             return true;
         }
         if (args[0].equalsIgnoreCase("config")) return CooldownConfigCommand.execute(sender, args);
         FileConfiguration config = Easybot.instance.getConfig();
+        String action = args[0].toLowerCase(Locale.ROOT);
+        if (Arrays.asList("bind", "confirm", "status", "reload", "help").contains(action)
+                && !CommandPermissions.canUse(sender, action)) {
+            sender.sendMessage("§c此命令已禁用或没有权限");
+            return true;
+        }
         if(args[0].equalsIgnoreCase("reload")){
-            if(!sender.isOp()){
-                sender.sendMessage("§f[§a!§f] §c你没有权限执行此命令");
-                return true;
-            }
-            Easybot.instance.reload();
-            sender.sendMessage("§f[§a!§f] §a配置文件已重载");
+            boolean success = Easybot.instance.reload();
+            sender.sendMessage(success ? "§a配置文件已重载" : "§c重载失败，继续使用上一个有效配置，请查看后台");
             return true;
         }
         if (args[0].equalsIgnoreCase("bind") && args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
@@ -141,7 +142,7 @@ public class EasyBotCommandExecutor implements TabExecutor {
             String playerName = sender.getName();
             new Thread(() -> queryBindStatus(sender, playerName)).start();
         } else {
-            sender.sendMessage("§f[§a!§f] §a请输入/easybot bind §f绑定你的账号");
+            sendHelp(sender);
         }
         return true;
     }
@@ -210,24 +211,36 @@ public class EasyBotCommandExecutor implements TabExecutor {
         }
     }
 
+    private void sendHelp(CommandSender sender) {
+        if (!CommandPermissions.canUse(sender, "help")) {
+            sender.sendMessage("§c此命令已禁用或没有权限");
+            return;
+        }
+        for (String name : Arrays.asList("bind", "confirm", "status", "reload")) {
+            if (CommandPermissions.canUse(sender, name)) sender.sendMessage("§a/easybot " + name + (name.equals("confirm") ? " <code>" : ""));
+        }
+        if (CommandPermissions.canUse(sender, "esay")) sender.sendMessage("§a/esay <消息>");
+        if (CommandPermissions.canUse(sender, "config")) sender.sendMessage("§a/easybot config <配置项> [秒数]");
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] strings) {
         if (strings.length == 1) {
-            List<String> options = new ArrayList<>(Arrays.asList("bind", "confirm", "status"));
-            if (commandSender.isOp()) options.add("reload");
-            if (commandSender.hasPermission("easybot.command.config")) options.add("config");
-            options.removeIf(option -> !option.startsWith(strings[0].toLowerCase(Locale.ROOT)));
-            return options;
+            List<String> result = new ArrayList<>();
+            for (String name : Arrays.asList("help", "bind", "confirm", "status", "reload", "config")) {
+                if (CommandPermissions.canUse(commandSender, name) && name.startsWith(strings[0].toLowerCase(Locale.ROOT))) result.add(name);
+            }
+            return result;
         }
         if (strings.length >= 2 && strings[0].equalsIgnoreCase("config")) {
-            if (!commandSender.hasPermission("easybot.command.config")) return Collections.emptyList();
+            if (!CommandPermissions.canUse(commandSender, "config")) return Collections.emptyList();
             List<String> options = new ArrayList<>();
             if (strings.length == 2) options.addAll(CooldownConfigCommand.KEYS);
             if (strings.length == 3 && CooldownConfigCommand.KEYS.contains(strings[1])) options.addAll(Arrays.asList("0", "30", "60"));
             options.removeIf(option -> !option.startsWith(strings[strings.length - 1]));
             return options;
         }
-        if (strings.length == 2 && strings[0].equalsIgnoreCase("bind")) {
+        if (strings.length == 2 && strings[0].equalsIgnoreCase("bind") && CommandPermissions.canUse(commandSender, "bind") && "confirm".startsWith(strings[1].toLowerCase(Locale.ROOT))) {
             return Collections.singletonList("confirm");
         }
         return Collections.emptyList();

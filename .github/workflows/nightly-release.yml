@@ -15,13 +15,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # gradle-wrapper.properties 配的是腾讯云镜像（国内快），但 GitHub 托管 runner 在海外，
+      # 下该镜像会 Read timed out，所以只在 CI 里换成官方源。
       - name: Use official Gradle distribution in CI
-        run: sed -i 's#mirrors\.cloud\.tencent\.com/gradle/#services.gradle.org/distributions/#' gradle/wrapper/gradle-wrapper.properties
+        run: |
+          sed -i 's#mirrors\.cloud\.tencent\.com/gradle/#services.gradle.org/distributions/#' gradle/wrapper/gradle-wrapper.properties
+          grep distributionUrl gradle/wrapper/gradle-wrapper.properties
 
-      - name: Set up JDK 25
+      - name: Set up JDK 25 (compile toolchain)
+        id: jdk25
         uses: actions/setup-java@v4
         with:
           java-version: '25'
+          distribution: 'temurin'
+
+      # Gradle 8.4 / Groovy 3.0.17 无法在 Java 25 上运行（Unsupported class file major version 69，
+      # Gradle 官方矩阵要求 9.1.0+ 才能跑 Java 25），所以让 Gradle 自身用 JDK 17 跑，
+      # 编译目标仍由上面 step 提供的 JDK 25 toolchain 完成。
+      - name: Set up JDK 17 (run Gradle)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Setup Gradle
@@ -36,7 +50,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run shadowJar
-        run: ./gradlew shadowJar
+        run: ./gradlew shadowJar -Dorg.gradle.java.installations.paths="${{ steps.jdk25.outputs.path }}"
         env:
           USERNAME: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}

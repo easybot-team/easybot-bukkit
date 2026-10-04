@@ -1,7 +1,6 @@
 package com.springwater.easybot.utils;
 
 import com.springwater.easybot.Easybot;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 public class AtEventUtils {
