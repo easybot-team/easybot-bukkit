@@ -10,8 +10,8 @@ import org.bukkit.plugin.Plugin;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
 
 public class AuthMeUtils {
     @Getter
@@ -157,17 +157,28 @@ public class AuthMeUtils {
         if (!isDialogSupported || preJoinDialogService == null) {
             return false;
         }
+        String normalizedName = playerName.toLowerCase(Locale.ROOT);
+
+        // AuthMe 6.0.0：预加入状态按玩家名存放
         try {
-            Field pendingPreJoinByNameField = preJoinDialogService.getClass()
-                .getDeclaredField("pendingPreJoinByName");
-            pendingPreJoinByNameField.setAccessible(true);
-
+            Field field = preJoinDialogService.getClass().getDeclaredField("pendingPreJoinByName");
+            field.setAccessible(true);
             @SuppressWarnings("unchecked")
-            ConcurrentMap<String, UUID> pendingPreJoinByName =
-                (ConcurrentMap<String, UUID>) pendingPreJoinByNameField.get(preJoinDialogService);
+            Map<String, UUID> pending = (Map<String, UUID>) field.get(preJoinDialogService);
+            return pending.containsKey(normalizedName);
+        } catch (NoSuchFieldException ignored) {
+            // 6.0.1 起改为按连接会话存放，继续尝试新结构
+        } catch (Exception e) {
+            return false;
+        }
 
-            String normalizedName = playerName.toLowerCase(Locale.ROOT);
-            return pendingPreJoinByName.containsKey(normalizedName);
+        // AuthMe 6.0.1+：sessionByName 保存 玩家名 -> 会话 ID
+        try {
+            Field field = preJoinDialogService.getClass().getDeclaredField("sessionByName");
+            field.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, Long> sessions = (Map<String, Long>) field.get(preJoinDialogService);
+            return sessions.containsKey(normalizedName);
         } catch (Exception e) {
             return false;
         }
